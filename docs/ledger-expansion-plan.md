@@ -1,7 +1,7 @@
 # Ledger Page Expansion Plan
 
 Status: Ready for implementation
-Owner: admin-service
+Owner: Argus admin API
 Last updated: 2026-05-17
 
 ## Context
@@ -218,7 +218,7 @@ If any `(category, effective_from)` already exists, the entire request is reject
 Side effects:
 - Single DB transaction (`BEGIN ... COMMIT`); partial state cannot land.
 - One row in `admin_activity_log` with `action="update_infra_cost"`, details containing the request body and inserted period IDs.
-- Publishes Redis invalidation on the `runtimeconfig:invalidate` channel with key prefix `ledger.infra_cost_*` so other admin-service instances refresh any in-memory caches (currently none, but hooks the future).
+- Publishes Redis invalidation on the `runtimeconfig:invalidate` channel with key prefix `ledger.infra_cost_*` so other Argus instances refresh any in-memory caches (currently none, but hooks the future).
 
 Response: same shape as `GET /admin/ledger/infra-costs?month={effective_from month}`.
 
@@ -481,7 +481,7 @@ r.With(
    - Recreate the five legacy `system_config` keys from the most recent period row per category.
    - `DELETE FROM system_config WHERE key = 'ledger.usd_to_idr_source'`.
    - `DROP TABLE infra_cost_periods`.
-3. **Service deploy** — admin-service deploy bundles migration 041 + the new endpoints in one release. No dual-write phase, no compatibility shim. Existing tests that reference legacy keys (`ledger_handler_test.go`, `ledger_service_test.go`, `ledger_edge_test.go`) are rewritten to the new repo and table.
+3. **Service deploy** — admin-service deploy bundles migration 041 + the new endpoints in one release. No dual-write phase, no compatibility shim. Existing tests that reference legacy keys (`ledger_handler_test.go`, `ledger_service_test.go`, `ledger_edge_test.go`) are rewritten to the Argus repository and table.
 4. **Frontend cutover** — frontend ledger page replaces its calls to `PUT /admin/config/ledger.infra_cost_*_idr` with `PUT /admin/ledger/infra-costs`. Deployment order: backend first (legacy keys still readable in audit log), frontend second.
 
 ---
