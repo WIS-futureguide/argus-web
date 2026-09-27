@@ -41,24 +41,10 @@ export interface MonitoringResponse {
   services: Record<string, ServiceCheck>
   tunnel: Record<string, ServiceCheck>
   workers: WorkerInfo[]
-  maintenance_mode: boolean
-}
-
-export interface MaintenanceToggleResponse {
-  message: string
-  maintenance_mode: string
 }
 
 export const monitoringApi = {
   status(): Promise<MonitoringResponse> {
     return api.get<MonitoringResponse>('/admin/monitoring')
-  },
-
-  toggleMaintenance(enabled: boolean, reason: string): Promise<MaintenanceToggleResponse> {
-    return api.post<MaintenanceToggleResponse>('/admin/monitoring/maintenance', { enabled, reason })
-  },
-
-  restartWorker(): Promise<{ message: string }> {
-    return api.post<{ message: string }>('/admin/worker/restart')
   },
 }

@@ -3,7 +3,7 @@
 Base URL (tunnel): `https://api-admin.futureguide.id`
 Base URL (local): `http://localhost:8085`
 
-All `/admin/*` endpoints require a valid JWT issued by `POST /auth/admin/login` at `https://auth.futureguide.id/auth/admin/login`. Include it as a Bearer token:
+All `/admin/*` endpoints require a valid JWT issued by Apollo's `POST /auth/admin/login` at `https://auth.futureguide.id/auth/admin/login`. Include it as a Bearer token:
 
 ```
 Authorization: Bearer <jwt>
@@ -27,7 +27,6 @@ Rate limits apply per client IP (respects `X-Forwarded-For` only from `TRUSTED_P
 |-------|-------|
 | General admin | 60 req/min |
 | Monitoring | 10 req/min |
-| Maintenance toggle | 5 req/min |
 
 **Rate limit headers** (present on every response from rate-limited routes):
 
@@ -524,6 +523,7 @@ Paginated user list.
       "registered_at": "2026-05-10T08:00:00Z",
       "email_verified": true,
       "suspended": false,
+      "deleted": false,
       "token_balance": 3,
       "assessment_count": 5,
       "last_assessment_at": "2026-05-14T10:30:00Z"
@@ -534,6 +534,8 @@ Paginated user list.
 ```
 
 **Nullable fields:** `school_name`, `last_assessment_at` can be `null`.
+
+**`deleted`:** always a boolean. `true` marks an anonymized account; its financial records remain available by the stable user ID.
 
 **`next_cursor`:** omitted when no more pages.
 
@@ -569,6 +571,7 @@ User detail with aggregate stats, assessment list, chat sessions, and recent tra
     "birthdate": "2008-03-15",
     "email_verified": true,
     "suspended": false,
+    "deleted": false,
     "provider": "email",
     "token_balance": 3,
     "created_at": "2026-05-10T08:00:00Z",
@@ -586,7 +589,7 @@ User detail with aggregate stats, assessment list, chat sessions, and recent tra
     { "id": "uuid", "status": "completed", "submitted_at": "...", "completed_at": "...", "model_used": "gemini-2.5-flash" }
   ],
   "chat_sessions": [
-    { "id": "uuid", "assessment_id": "uuid", "title": "Career guidance", "model_used": "google/gemini-2.5-flash", "message_count": 12, "last_message_at": "..." }
+    { "id": "uuid", "assessment_id": "uuid", "model_used": "google/gemini-2.5-flash", "message_count": 12, "last_message_at": "..." }
   ],
   "recent_transactions": [
     { "id": "uuid", "amount": -1, "transaction_type": "assessment_debit", "description": "Assessment submission", "reference_id": "assessment-uuid", "balance_after": 2, "created_at": "..." }
@@ -594,7 +597,9 @@ User detail with aggregate stats, assessment list, chat sessions, and recent tra
 }
 ```
 
-**Nullable fields:** `user.school_id`, `user.school_name`, `user.grade`, `user.major`, `user.birthdate`, `stats.last_active_at`, `assessments[].completed_at`, `assessments[].model_used`, `chat_sessions[].title`, `chat_sessions[].last_message_at`.
+**Nullable fields:** `user.school_id`, `user.school_name`, `user.grade`, `user.major`, `user.birthdate`, `stats.last_active_at`, `assessments[].completed_at`, `assessments[].model_used`, `chat_sessions[].last_message_at`.
+
+**`user.deleted`:** always a boolean. `true` marks an anonymized account. User mutation endpoints treat deleted accounts as not found (`404`).
 
 **`reference_id`:** omitted (omitempty) when empty string.
 
@@ -1025,8 +1030,7 @@ Full infrastructure status. All checks run in parallel with 3s per-check timeout
   },
   "workers": [
     { "worker_id": "worker-abc123", "ttl_seconds": 25 }
-  ],
-  "maintenance_mode": false
+  ]
 }
 ```
 
@@ -1045,54 +1049,6 @@ Full infrastructure status. All checks run in parallel with 3s per-check timeout
 | Status | Message |
 |--------|---------|
 | 500 | `"failed to load monitoring status"` |
-
----
-
-### `POST /admin/monitoring/maintenance`
-
-Toggle maintenance mode.
-
-**Access:** Superadmin
-
-**Rate limited:** 5 req/min
-
-**Body size limit:** 4 KB
-
-**Request body:**
-```json
-{
-  "enabled": true,
-  "reason": "Scheduled database maintenance"
-}
-```
-
-**Response 200:**
-```json
-{
-  "message": "maintenance mode enabled",
-  "maintenance_mode": "enabled"
-}
-```
-
-Or when disabling:
-```json
-{
-  "message": "maintenance mode disabled",
-  "maintenance_mode": "disabled"
-}
-```
-
-**Note:** `maintenance_mode` is a string (`"enabled"` / `"disabled"`), not a boolean.
-
-**Errors:**
-
-| Status | Message |
-|--------|---------|
-| 400 | `"invalid request body"` |
-| 403 | `"superadmin role required"` |
-| 500 | `"failed to toggle maintenance mode"` |
-
-**Side effects:** Updates `system_config` key, publishes Redis invalidation, logged to `admin_activity_log`.
 
 ---
 
@@ -1341,211 +1297,6 @@ Or when activating:
 | 403 | `"superadmin role required"` |
 | 404 | `"template not found"` |
 | 500 | `"failed to toggle template"` |
-
----
-
-### `POST /admin/worker/restart`
-
-Force-restart the analysis worker. Publishes a restart signal on Redis channel `worker:control:restart`.
-
-**Access:** Superadmin
-
-**Cooldown:** 60 seconds between restarts.
-
-**Response 200:** `{"message": "Worker restart signal sent"}`
-
-**Errors:**
-
-| Status | Message |
-|--------|---------|
-| 403 | `"superadmin role required"` |
-| 429 | `"worker restart cooldown active, try again in 60 seconds"` |
-| 500 | `"failed to send restart signal"` |
-
----
-
-## A/B Prompt Testing
-
-### `GET /admin/ab-tests`
-
-List all A/B tests.
-
-**Access:** Any admin
-
-**Query params:**
-
-| Param | Type | Description |
-|-------|------|-------------|
-| `status` | string | Filter: `pending`, `running`, `completed`, `failed` |
-| `limit` | int | Page size (default 20, max 50) |
-| `cursor` | string | Keyset cursor |
-
-**Response 200:**
-```json
-{
-  "tests": [
-    {
-      "id": "uuid",
-      "assessment_id": "uuid",
-      "admin_id": "uuid",
-      "admin_email": "superadmin@futureguide.id",
-      "status": "completed",
-      "prompt_key": "analysis.role",
-      "version_a": 2,
-      "version_b": 3,
-      "winner": "b",
-      "started_at": "2026-05-15T08:00:00Z",
-      "completed_at": "2026-05-15T08:01:02Z",
-      "created_at": "2026-05-15T07:59:55Z"
-    }
-  ],
-  "next_cursor": "..."
-}
-```
-
-**Optional fields (omitempty):** `winner` (absent if no verdict), `started_at` (absent if not started), `completed_at` (absent if not completed), `next_cursor` (absent if no more pages).
-
-**Errors:**
-
-| Status | Message |
-|--------|---------|
-| 400 | `"invalid cursor"` |
-| 400 | `"validation failed: invalid status filter: <value>"` |
-| 500 | `"internal error"` |
-
----
-
-### `POST /admin/ab-tests`
-
-Create a new A/B test. Snapshots prompt content at creation time, then LPUSH to `queue:ab_tests`.
-
-**Access:** Superadmin
-
-**Body size limit:** 4 KB
-
-**Request body:**
-```json
-{
-  "assessment_id": "uuid",
-  "template_key": "analysis.role",
-  "version_a": 2,
-  "version_b": 3
-}
-```
-
-**Validation:**
-- `assessment_id` required, must be valid UUID, assessment must be completed
-- `template_key` required
-- `version_a` and `version_b` must be > 0 and different
-- Both versions must exist for the given template key
-- Max 3 concurrent pending/running tests
-
-**Response 201:**
-```json
-{
-  "id": "uuid",
-  "status": "pending",
-  "message": "A/B test created. Results will be available in ~60 seconds."
-}
-```
-
-**Errors:**
-
-| Status | Message |
-|--------|---------|
-| 400 | `"invalid request body"` |
-| 400 | `"invalid assessment_id format"` |
-| 400 | `"validation failed: assessment_id is required"` |
-| 400 | `"validation failed: template_key is required"` |
-| 400 | `"validation failed: version_a must be positive"` |
-| 400 | `"validation failed: version_b must be positive"` |
-| 400 | `"validation failed: version_a and version_b must be different"` |
-| 400 | `"assessment not found or not completed"` |
-| 400 | `"prompt version not found: version_a (N) not found for key X"` |
-| 400 | `"prompt version not found: version_b (N) not found for key X"` |
-| 403 | `"forbidden"` |
-| 429 | `"too many active tests (max 3 pending/running)"` |
-| 500 | `"internal error"` |
-
----
-
-### `GET /admin/ab-tests/{id}`
-
-Get full A/B test detail with results.
-
-**Access:** Any admin
-
-**Response 200:**
-```json
-{
-  "id": "uuid",
-  "assessment_id": "uuid",
-  "admin_id": "uuid",
-  "admin_email": "superadmin@futureguide.id",
-  "status": "completed",
-  "prompt_key": "analysis.role",
-  "version_a": 2,
-  "version_b": 3,
-  "prompt_a_content": "full prompt text...",
-  "prompt_b_content": "full prompt text...",
-  "result_a": {},
-  "result_b": {},
-  "usage_a": { "prompt_tokens": 4500, "completion_tokens": 2100, "total_tokens": 6600, "latency_ms": 28000, "estimated_cost_usd": 0.0045 },
-  "usage_b": {},
-  "winner": "b",
-  "notes": "Version 3 produces more culturally relevant career suggestions",
-  "started_at": "2026-05-15T08:00:00Z",
-  "completed_at": "2026-05-15T08:01:02Z",
-  "created_at": "2026-05-15T07:59:55Z"
-}
-```
-
-**Nullable fields:** `result_a`, `result_b`, `usage_a`, `usage_b` — serialized as JSON `null` (not omitted) when test is pending/running.
-
-**Optional fields (omitempty):** `winner` (absent if no verdict), `notes` (absent if no verdict), `started_at` (absent if not started), `completed_at` (absent if not completed).
-
-**Errors:**
-
-| Status | Message |
-|--------|---------|
-| 400 | `"invalid id format"` |
-| 404 | `"ab test not found"` |
-| 500 | `"internal error"` |
-
----
-
-### `PUT /admin/ab-tests/{id}/verdict`
-
-Record the admin's judgment.
-
-**Access:** Superadmin
-
-**Body size limit:** 4 KB
-
-**Request body:**
-```json
-{
-  "winner": "b",
-  "notes": "Version 3 produces more culturally relevant career suggestions"
-}
-```
-
-**Validation:** `winner` required, must be `"a"`, `"b"`, or `"tie"`. `notes` optional (max 2000 chars). Test must be in `completed` status.
-
-**Response 200:** `{"message": "Verdict recorded", "winner": "b"}`
-
-**Errors:**
-
-| Status | Message |
-|--------|---------|
-| 400 | `"invalid id format"` |
-| 400 | `"invalid request body"` |
-| 400 | `"validation failed: winner must be 'a', 'b', or 'tie'"` |
-| 400 | `"validation failed: notes must be 2000 characters or less"` |
-| 403 | `"forbidden"` |
-| 404 | `"ab test not found"` |
-| 409 | `"ab test is not completed yet"` |
-| 500 | `"internal error"` |
 
 ---
 
@@ -1889,8 +1640,8 @@ All errors follow the canonical format from `shared/pkg/httputil`:
 | 401 | Missing/invalid/expired JWT, or current password incorrect (self-edit) |
 | 403 | Insufficient role (admin trying superadmin-only endpoint, or stale token after demotion) |
 | 404 | Resource not found |
-| 409 | Conflict (email duplicate, A/B test not in completed status for verdict) |
-| 429 | Rate limit exceeded or cooldown active |
+| 409 | Conflict (email duplicate) |
+| 429 | Rate limit exceeded |
 | 500 | Internal server error |
 | 503 | Service unavailable (Redis down, rate limiter fail-closed) |
 

@@ -1,16 +1,9 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import { useQuery, useQueryClient } from '@tanstack/vue-query'
-import { useAuthStore } from '@/stores/auth'
-import { useToast } from '@/composables/useToast'
 import { useRateLimit } from '@/composables/useRateLimit'
 import { monitoringApi } from '@/lib/api-monitoring'
-import Modal from '@/components/Modal.vue'
-import SuperadminBadge from '@/components/SuperadminBadge.vue'
-import type { ApiError } from '@/lib/api'
 
-const auth = useAuthStore()
-const toast = useToast()
 const queryClient = useQueryClient()
 const { remaining: rateLimitRemaining, limit: rateLimitTotal } = useRateLimit()
 
@@ -31,51 +24,6 @@ function manualRefresh() {
   queryClient.invalidateQueries({ queryKey: ['monitoring'] })
   refreshCooldown.value = true
   setTimeout(() => { refreshCooldown.value = false }, 5000)
-}
-
-const activeModal = ref<string | null>(null)
-const actionLoading = ref(false)
-const maintenanceReason = ref('')
-
-function openModal(name: string) {
-  activeModal.value = name
-}
-function closeModal() {
-  activeModal.value = null
-  maintenanceReason.value = ''
-}
-
-async function toggleMaintenance() {
-  if (!data.value) return
-  actionLoading.value = true
-  try {
-    const newState = !data.value.maintenance_mode
-    const res = await monitoringApi.toggleMaintenance(newState, maintenanceReason.value || 'Admin toggle')
-    toast.success(res.message)
-    queryClient.invalidateQueries({ queryKey: ['monitoring'] })
-    closeModal()
-  } catch (e) {
-    toast.error((e as ApiError).message || 'Terjadi kesalahan')
-  } finally {
-    actionLoading.value = false
-  }
-}
-
-const workerCooldown = ref(false)
-async function restartWorker() {
-  if (workerCooldown.value) return
-  actionLoading.value = true
-  try {
-    const res = await monitoringApi.restartWorker()
-    toast.success(res.message)
-    workerCooldown.value = true
-    setTimeout(() => { workerCooldown.value = false }, 60000)
-    closeModal()
-  } catch (e) {
-    toast.error((e as ApiError).message || 'Terjadi kesalahan')
-  } finally {
-    actionLoading.value = false
-  }
 }
 
 function statusIndicator(status: string): string {
@@ -128,35 +76,6 @@ function formatUptime(seconds: number): string {
     <div v-if="isLoading" class="text-phosphor-faint text-xs py-8 text-center">>>> LOADING MONITORING DATA...</div>
 
     <template v-else-if="data">
-      <!-- MAINTENANCE BANNER -->
-      <div v-if="data.maintenance_mode" class="border-2 border-hazard p-3 mb-4 text-center">
-        <span class="text-[11px] text-hazard">[ MAINTENANCE MODE ACTIVE ]</span>
-      </div>
-
-      <!-- ACTIONS (superadmin) -->
-      <div v-if="auth.isSuperadmin" class="border-2 border-crt-border p-3 sm:p-4 mb-4">
-        <div class="text-[11px] text-phosphor-dim mb-3 uppercase flex items-center">
-          [ ACTIONS ]
-          <SuperadminBadge />
-        </div>
-        <div class="flex flex-col sm:flex-row flex-wrap gap-2">
-          <button
-            class="border px-3 text-[11px] transition-colors min-h-[40px] w-full sm:w-auto"
-            :class="data.maintenance_mode ? 'border-crt-border text-phosphor-dim hover:text-phosphor hover:border-phosphor-dim' : 'border-hazard text-hazard hover:bg-hazard hover:text-crt'"
-            @click="openModal('maintenance')"
-          >
-            {{ data.maintenance_mode ? 'DISABLE MAINTENANCE' : 'ENABLE MAINTENANCE' }}
-          </button>
-          <button
-            class="border border-crt-border px-3 text-[11px] text-phosphor-dim hover:text-phosphor hover:border-phosphor-dim transition-colors disabled:opacity-30 disabled:cursor-not-allowed min-h-[40px] w-full sm:w-auto"
-            :disabled="workerCooldown"
-            @click="openModal('restart-worker')"
-          >
-            RESTART WORKER{{ workerCooldown ? ' (COOLDOWN)' : '' }}
-          </button>
-        </div>
-      </div>
-
       <!-- POSTGRES + REDIS -->
       <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
         <div class="border-2 border-crt-border p-3 sm:p-4">
@@ -269,47 +188,5 @@ function formatUptime(seconds: number): string {
       </div>
     </template>
 
-    <!-- MODALS -->
-    <Modal :open="activeModal === 'maintenance'" title="TOGGLE MAINTENANCE MODE" @close="closeModal">
-      <p class="text-xs text-phosphor mb-3">
-        {{ data?.maintenance_mode ? 'Disable maintenance mode? User-facing services will resume.' : 'Enable maintenance mode? User-facing services will be blocked.' }}
-      </p>
-      <div class="mb-4">
-        <label class="block text-[11px] text-phosphor-faint mb-1 uppercase">REASON</label>
-        <input
-          v-model="maintenanceReason"
-          class="w-full bg-crt-surface border border-crt-border px-2 py-2 text-base sm:text-xs text-phosphor focus:outline-none focus:border-hazard min-h-[44px] sm:min-h-0"
-          placeholder="Optional reason..."
-        />
-      </div>
-      <div class="flex flex-col sm:flex-row gap-2">
-        <button
-          class="border border-hazard px-3 text-[11px] text-hazard hover:bg-hazard hover:text-crt transition-colors min-h-[40px] w-full sm:w-auto"
-          :disabled="actionLoading"
-          @click="toggleMaintenance"
-        >
-          [ CONFIRM ]
-        </button>
-        <button class="border border-crt-border px-3 text-[11px] text-phosphor-dim min-h-[40px] w-full sm:w-auto" @click="closeModal">
-          [ CANCEL ]
-        </button>
-      </div>
-    </Modal>
-
-    <Modal :open="activeModal === 'restart-worker'" title="RESTART WORKER" @close="closeModal">
-      <p class="text-xs text-phosphor mb-4">Send restart signal to analysis worker? 60s cooldown applies.</p>
-      <div class="flex flex-col sm:flex-row gap-2">
-        <button
-          class="border border-hazard px-3 text-[11px] text-hazard hover:bg-hazard hover:text-crt transition-colors min-h-[40px] w-full sm:w-auto"
-          :disabled="actionLoading"
-          @click="restartWorker"
-        >
-          [ RESTART ]
-        </button>
-        <button class="border border-crt-border px-3 text-[11px] text-phosphor-dim min-h-[40px] w-full sm:w-auto" @click="closeModal">
-          [ CANCEL ]
-        </button>
-      </div>
-    </Modal>
   </div>
 </template>

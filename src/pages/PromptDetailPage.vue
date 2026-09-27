@@ -5,7 +5,6 @@ import { useQuery, useQueryClient } from '@tanstack/vue-query'
 import { useAuthStore } from '@/stores/auth'
 import { useToast } from '@/composables/useToast'
 import { promptsApi } from '@/lib/api-prompts'
-import { monitoringApi } from '@/lib/api-monitoring'
 import Modal from '@/components/Modal.vue'
 import SuperadminBadge from '@/components/SuperadminBadge.vue'
 import type { ApiError } from '@/lib/api'
@@ -39,34 +38,6 @@ const editReason = ref('')
 // Revert form
 const revertVersion = ref<number>(1)
 const revertReason = ref('')
-
-// Worker restart
-const restartCooldown = ref(false)
-const restartCooldownRemaining = ref(0)
-let restartTimer: ReturnType<typeof setInterval> | null = null
-
-async function handleRestartWorker() {
-  if (restartCooldown.value) return
-  actionLoading.value = true
-  try {
-    const res = await monitoringApi.restartWorker()
-    toast.success(res.message)
-    restartCooldown.value = true
-    restartCooldownRemaining.value = 60
-    restartTimer = setInterval(() => {
-      restartCooldownRemaining.value--
-      if (restartCooldownRemaining.value <= 0) {
-        restartCooldown.value = false
-        if (restartTimer) clearInterval(restartTimer)
-        restartTimer = null
-      }
-    }, 1000)
-  } catch (e) {
-    toast.error((e as ApiError).message || 'Terjadi kesalahan')
-  } finally {
-    actionLoading.value = false
-  }
-}
 
 function openModal(name: string) {
   if (name === 'edit' && prompt.value) {
@@ -186,13 +157,6 @@ async function handleToggle() {
           @click="openModal('toggle')"
         >
           {{ prompt.is_active ? 'DEACTIVATE' : 'ACTIVATE' }}
-        </button>
-        <button
-          class="border border-hazard px-3 text-[11px] text-hazard hover:bg-hazard hover:text-crt transition-colors disabled:opacity-40 disabled:cursor-not-allowed min-h-[36px]"
-          :disabled="restartCooldown || actionLoading"
-          @click="openModal('restart')"
-        >
-          {{ restartCooldown ? `RESTART WORKER (${restartCooldownRemaining}s)` : 'RESTART WORKER' }}
         </button>
       </div>
     </div>
@@ -342,26 +306,5 @@ async function handleToggle() {
       </div>
     </Modal>
 
-    <!-- RESTART WORKER MODAL -->
-    <Modal :open="activeModal === 'restart'" title="RESTART ANALYSIS WORKER" @close="closeModal">
-      <p class="text-xs text-phosphor mb-2">
-        This will send a restart signal to the analysis worker.
-      </p>
-      <p class="text-xs text-hazard mb-4">
-        In-flight jobs will be reclaimed after 90 seconds. A 60-second cooldown applies after restart.
-      </p>
-      <div class="flex flex-col sm:flex-row gap-2">
-        <button
-          class="border border-hazard px-3 text-[11px] text-hazard hover:bg-hazard hover:text-crt transition-colors min-h-[40px] w-full sm:w-auto"
-          :disabled="actionLoading"
-          @click="handleRestartWorker(); closeModal()"
-        >
-          [ RESTART ]
-        </button>
-        <button class="border border-crt-border px-3 text-[11px] text-phosphor-dim min-h-[40px] w-full sm:w-auto" @click="closeModal">
-          [ CANCEL ]
-        </button>
-      </div>
-    </Modal>
   </div>
 </template>

@@ -8,7 +8,7 @@
 ## Overview
 
 Admin dashboard UI for FutureGuide. Consumes the Argus admin API
-(`https://api-admin.futureguide.id`) and `auth-service`
+(`https://api-admin.futureguide.id`) and Apollo authentication API
 (`https://auth.futureguide.id`). Second-largest repo in the workspace by graph
 size (1392 nodes, 93 communities), with a test file beside almost every page.
 
@@ -52,11 +52,11 @@ not require removing them.
 ```
 src/pages/         one page per admin module, each with a .test.ts beside it:
                    Overview, Assessments (+Detail, +Chat, +Compare), Users
-                   (+Detail), Config, Monitoring, Prompts (+Detail), AbTests
-                   (+Detail, +New), Ledger, Admins, Login, ChangePassword
+                   (+Detail), Config, Monitoring, Prompts (+Detail), Ledger,
+                   Admins, Login, ChangePassword
 src/lib/api*.ts    one typed API client per admin module (api-overview,
                    api-assessments, api-users, api-config, api-monitoring,
-                   api-prompts, api-abtests, api-admins, api-ledger)
+                   api-prompts, api-admins, api-ledger)
 src/lib/api.ts     shared fetch wrapper, auth header, error shape
 src/stores/auth.ts Pinia auth store (JWT from POST /auth/admin/login)
 src/components/    shared components + ledger/ and users/ subtrees
@@ -77,7 +77,6 @@ docs/              ADRs and module plans/audits (ledger, responsive, WCAG, Vue 3
 - Superadmin-only actions (runtime config writes, config reload, admin account
   create/update/delete) must be gated in the UI by the role claim, and the
   backend enforces it again — never rely on UI gating alone.
-- A/B tests: max 3 concurrent pending/running. Reflect that limit in the UI.
 - Follow `.agents/skills/vue-testing-best-practices/SKILL.md`: black-box component
   testing, `flushPromises` for async, Pinia store setup per test, no
   snapshot-only tests.

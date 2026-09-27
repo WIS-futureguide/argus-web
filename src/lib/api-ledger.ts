@@ -276,11 +276,6 @@ export const ledgerApi = {
     return api.get<LedgerResponse>(`/admin/ledger${buildQuery({ month })}`)
   },
 
-  /** @deprecated alias for `getSummary` kept for backward compatibility. */
-  get(month?: string): Promise<LedgerResponse> {
-    return ledgerApi.getSummary(month)
-  },
-
   months(): Promise<{ months: LedgerMonth[] }> {
     return api.get<{ months: LedgerMonth[] }>('/admin/ledger/months')
   },
