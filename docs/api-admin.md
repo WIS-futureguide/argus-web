@@ -3,7 +3,9 @@
 Base URL (tunnel): `https://api-admin.futureguide.id`
 Base URL (local): `http://localhost:8085`
 
-All `/admin/*` endpoints require a valid JWT issued by Apollo's `POST /auth/admin/login` at `https://auth.futureguide.id/auth/admin/login`. Include it as a Bearer token:
+This reference covers 45 administrative routes.
+
+All `/admin/*` endpoints require a valid JWT issued by `POST /auth/admin/login` at `https://auth.futureguide.id/auth/admin/login`. Include it as a Bearer token:
 
 ```
 Authorization: Bearer <jwt>
@@ -16,8 +18,8 @@ Content-Type: application/json
 
 | Role | Access |
 |------|--------|
-| `admin` | All read endpoints + user edit/verify + self-edit |
-| `superadmin` | Everything, plus write endpoints (config, prompts, tokens, suspend, admin CRUD) |
+| `admin` | All read endpoints + `PUT /admin/users/{id}`, `POST /admin/users/{id}/verify-email`, `PUT /admin/admins/me` |
+| `superadmin` | Everything. Routes guarded by `SuperAdminOnly` middleware in `internal/admin/module.go`: user suspend/unsuspend/revoke-sessions/reset-password/grant-tokens/deduct-tokens; `PUT /config/{key}`, `POST /config/reload`; prompt update/revert/toggle; ledger infra-costs PUT/DELETE and exchange-rate PUT/refresh; admin create/update/delete/reset-password. |
 
 **Stale token rejection:** If an admin is demoted (e.g. superadmin to admin), existing JWTs with the old role are rejected with 403 until a new token is issued.
 
@@ -27,6 +29,7 @@ Rate limits apply per client IP (respects `X-Forwarded-For` only from `TRUSTED_P
 |-------|-------|
 | General admin | 60 req/min |
 | Monitoring | 10 req/min |
+| Exchange-rate refresh | 6 req/hour |
 
 **Rate limit headers** (present on every response from rate-limited routes):
 
@@ -42,9 +45,9 @@ Rate limits apply per client IP (respects `X-Forwarded-For` only from `TRUSTED_P
 
 ---
 
-## Pagination (all list endpoints)
+## Pagination
 
-All paginated endpoints use keyset cursor pagination:
+Paginated list endpoints use keyset cursor pagination. Not paginated (return everything; small tables): `GET /admin/admins`, `GET /admin/prompts`, `GET /admin/config`, `GET /admin/ledger/infra-costs` (history capped at 200 rows). `GET /admin/config/{key}/audit` and `GET /admin/prompts/{id}/versions` accept `limit` but no cursor.
 
 - **Cursor encoding:** base64url-encoded JSON `{"created_at":"RFC3339","id":"uuid"}`
 - **`next_cursor`:** present in response only when more pages exist; **omitted entirely** (not null, not empty string) when there are no more results
@@ -82,7 +85,7 @@ Fields that serialize as **null** when empty:
 
 ### `GET /health`
 
-Liveness check. Pings PostgreSQL and Redis.
+Liveness check. Static response — does not touch PostgreSQL or Redis.
 
 **Response 200:**
 ```json
@@ -91,7 +94,9 @@ Liveness check. Pings PostgreSQL and Redis.
 
 ### `GET /ready`
 
-Readiness check. Same as health.
+Readiness check. Pings PostgreSQL and Redis; non-200 when either is down.
+
+In the consolidated backend, Argus serves `GET /metrics` on port 8085 through `MetricsBearerAuthMiddleware`; when `METRICS_SECRET` is set, send `Authorization: Bearer <METRICS_SECRET>`. The legacy `admin-service` still has its separate `:9090` listener until Compose wiring moves in P10.
 
 **Response 200:**
 ```json
@@ -535,7 +540,10 @@ Paginated user list.
 
 **Nullable fields:** `school_name`, `last_assessment_at` can be `null`.
 
-**`deleted`:** always a boolean. `true` marks an anonymized account; its financial records remain available by the stable user ID.
+**`deleted`:** always a boolean. `true` marks an anonymized account; its
+financial records remain available by the stable user ID.
+
+**`assessment_count`:** always an integer (never `null`, `0` if none) — total assessments submitted by the user across all statuses, computed with a correlated subquery. For a completed/total split use `GET /admin/users/{id}` (`stats.assessments_total`, `stats.assessments_completed`).
 
 **`next_cursor`:** omitted when no more pages.
 
@@ -749,7 +757,7 @@ Reset a user's password directly. Generates or accepts a new password, revokes a
 }
 ```
 
-**Password validation (if provided):** 8-72 chars, must contain uppercase + lowercase + digit + special character.
+**Password validation (if provided):** 8-72 Unicode characters, at most 72 UTF-8 bytes for bcrypt, and must contain uppercase + lowercase + digit + special character.
 
 **Response 200:**
 ```json
@@ -783,6 +791,8 @@ Reset a user's password directly. Generates or accepts a new password, revokes a
 Grant tokens to a user.
 
 **Access:** Superadmin
+
+The balance update, `token_transactions` row, and admin activity row commit in one PostgreSQL transaction through Atlas `ledger`.
 
 **Body size limit:** 4 KB
 
@@ -831,6 +841,8 @@ Deduct tokens from a user.
 ```
 
 **Validation:** Same as grant-tokens. Fails if balance would go negative.
+
+The balance update, `token_transactions` row, and admin activity row commit in one PostgreSQL transaction through Atlas `ledger`.
 
 **Response 200:** `{"message": "Tokens deducted"}`
 
@@ -934,7 +946,7 @@ Update a config value.
 ```json
 {
   "value": "gemini-2.5-pro",
-  "reason": "Testing pro model for higher quality analysis"
+  "reason": "Testing whether the pro model improves claim support and structure compliance"
 }
 ```
 
@@ -1108,7 +1120,7 @@ Full template detail with content.
   "template_key": "analysis.role",
   "name": "Analysis Role Prompt",
   "description": "Defines the AI persona for analysis generation",
-  "content": "You are a professional psychologist...",
+  "content": "You are a non-clinical assessment analysis assistant...",
   "variables": ["scores", "references"],
   "version": 3,
   "is_active": true,
@@ -1149,7 +1161,7 @@ Version history for a template.
       "id": "uuid",
       "template_id": "uuid",
       "template_key": "analysis.role",
-      "content": "You are a professional psychologist...",
+      "content": "You are a non-clinical assessment analysis assistant...",
       "variables": ["scores", "references"],
       "version": 2,
       "changed_by": null,
@@ -1183,7 +1195,7 @@ Update a prompt template. Auto-creates a version record.
 **Request body:**
 ```json
 {
-  "content": "You are a professional psychologist specializing in...",
+  "content": "You are a non-clinical assessment analysis assistant specializing in...",
   "variables": [{"name": "scores"}, {"name": "references"}],
   "change_reason": "Added emphasis on Indonesian cultural context"
 }
@@ -1230,7 +1242,7 @@ Revert to a previous version. Creates a new version with old content (does not o
 ```json
 {
   "target_version": 2,
-  "reason": "Quality regression in v3 — reverting to stable v2"
+  "reason": "Claim-support regression in v3 — reverting to stable v2"
 }
 ```
 
@@ -1408,6 +1420,330 @@ List available months with data.
 
 ---
 
+### `GET /admin/ledger/compare?month=YYYY-MM&against=prev|YYYY-MM`
+
+**Access:** Any admin
+
+Returns two full P&L responses plus server-computed deltas.
+
+**Query params:**
+| Param | Required | Default | Note |
+|-------|----------|---------|------|
+| `month` | no | current month | Month to compare |
+| `against` | no | `prev` | `prev` = previous calendar month, or explicit `YYYY-MM` |
+
+**Validation:** `against` must differ from `month`. Both must be valid `YYYY-MM`.
+
+**Response `200`:**
+```json
+{
+  "current": { /* full LedgerResponse shape (see section 1) */ },
+  "previous": { /* full LedgerResponse shape (see section 1) */ },
+  "delta": {
+    "revenue_idr": { "absolute": 500000, "percent": 12.0 },
+    "ai_costs_idr": { "absolute": -10000, "percent": -5.0 },
+    "infra_costs_idr": { "absolute": 0, "percent": 0.0 },
+    "net_profit_idr": { "absolute": 510000, "percent": 18.0 },
+    "profit_margin_points": 3.2
+  }
+}
+```
+
+**Notes:**
+- `percent` fields are `null` when the previous value is 0 (avoids divide-by-zero).
+- `profit_margin_points` is delta in percentage **points**, not percent change.
+- Both months are fetched in parallel server-side — no extra latency vs two separate calls.
+
+---
+
+### `GET /admin/ledger/revenue?month=YYYY-MM&limit=&cursor=&package_id=`
+
+**Access:** Any admin
+
+Keyset-paginated list of completed payment orders for the month.
+
+**Query params:**
+| Param | Required | Default | Note |
+|-------|----------|---------|------|
+| `month` | no | current month | `YYYY-MM` |
+| `limit` | no | `20` | Max `100` |
+| `cursor` | no | — | Opaque string from previous response |
+| `package_id` | no | — | Filter by package |
+
+**Response `200`:**
+```json
+{
+  "rows": [
+    {
+      "id": "550e8400-e29b-41d4-a716-446655440000",
+      "user_id": "7c9e6679-7425-40de-944b-e07fc1f90ae7",
+      "user_email": "user@example.com",
+      "package_id": "pkg_basic",
+      "package_label": "Basic (5 tokens)",
+      "amount_idr": 75000,
+      "payment_method": "qris",
+      "completed_at": "2026-05-15T10:30:00Z"
+    }
+  ],
+  "next_cursor": "eyJjcmVhdGVkX2F0IjoiMjAyNi0wNS0xNVQxMDozMDowMFoiLCJpZCI6ImFiYzEyMyJ9"
+}
+```
+
+**Notes:**
+- Response key is `rows`, not `items`.
+- `next_cursor` is `""` (empty string) or absent when no more pages.
+- Sorted by `completed_at DESC, id DESC`.
+
+---
+
+### `GET /admin/ledger/ai-usage?month=YYYY-MM&limit=&cursor=&category=&model=&provider=`
+
+**Access:** Any admin
+
+Keyset-paginated list of successful AI usage logs for the month.
+
+**Query params:**
+| Param | Required | Default | Note |
+|-------|----------|---------|------|
+| `month` | no | current month | `YYYY-MM` |
+| `limit` | no | `20` | Max `100` |
+| `cursor` | no | — | Opaque string from previous response |
+| `category` | no | — | Must be one of: `analysis`, `chat`, `embedding`, `ab_test` |
+| `model` | no | — | Filter by model name (exact match) |
+| `provider` | no | — | Filter: `gemini`, `openrouter` |
+
+**Response `200`:**
+```json
+{
+  "rows": [
+    {
+      "id": "550e8400-e29b-41d4-a716-446655440000",
+      "created_at": "2026-05-15T10:30:00Z",
+      "provider": "gemini",
+      "model": "gemini-2.5-flash",
+      "operation": "generate_analysis",
+      "category": "analysis",
+      "prompt_tokens": 12500,
+      "completion_tokens": 3200,
+      "total_tokens": 15700,
+      "latency_ms": 4500,
+      "estimated_cost_usd": 0.0045,
+      "assessment_id": "uuid-or-null",
+      "chat_session_id": "uuid-or-null"
+    }
+  ],
+  "next_cursor": "eyJjcmVhdGVkX2F0IjoiMjAyNi0wNS0xNVQxMDozMDowMFoiLCJpZCI6ImFiYzEyMyJ9"
+}
+```
+
+**Notes:**
+- Response key is `rows`, not `items`.
+- `assessment_id` and `chat_session_id` are `null` when not applicable (omitted via `omitempty`).
+- Invalid `category` value returns `400`.
+- Sorted by `created_at DESC, id DESC`.
+
+---
+
+### `GET /admin/ledger/infra-costs?month=YYYY-MM`
+
+**Access:** Any admin
+
+Returns the active cost basis for the given month plus full change history.
+
+**Query params:**
+| Param | Required | Default | Note |
+|-------|----------|---------|------|
+| `month` | no | current month | `YYYY-MM` |
+
+**Response `200`:**
+```json
+{
+  "month": "2026-05",
+  "active": [
+    { "category": "database", "cost_idr": 250000, "effective_from": "2026-04-01T00:00:00Z", "note": "", "period_id": "uuid" },
+    { "category": "redis", "cost_idr": 100000, "effective_from": "2026-01-01T00:00:00Z", "period_id": "uuid" },
+    { "category": "server", "cost_idr": 800000, "effective_from": "2026-05-01T00:00:00Z", "note": "Upgraded to 4 vCPU", "period_id": "uuid" },
+    { "category": "domain", "cost_idr": 50000, "effective_from": "2025-01-01T00:00:00Z", "period_id": "uuid" },
+    { "category": "other", "cost_idr": 0 }
+  ],
+  "total_idr": 1200000,
+  "history": [
+    {
+      "id": "550e8400-e29b-41d4-a716-446655440000",
+      "category": "server",
+      "cost_idr": 800000,
+      "effective_from": "2026-05-01T00:00:00Z",
+      "note": "Upgraded to 4 vCPU",
+      "created_by": "Admin Name",
+      "created_at": "2026-05-01T08:00:00Z"
+    }
+  ]
+}
+```
+
+**Notes:**
+- `active` always has 5 entries (one per category: `database`, `redis`, `server`, `domain`, `other`).
+- Categories with no period row show `cost_idr: 0` and **omit** `effective_from`, `note`, `period_id` (JSON `omitempty`).
+- `history` is capped at 200 rows, sorted by `effective_from DESC, category ASC`.
+- `created_by` resolves to admin display name (full_name or email), not UUID.
+- All timestamps are RFC3339 format.
+
+---
+
+### `PUT /admin/ledger/infra-costs`
+
+**Access:** Superadmin
+
+Batch insert new cost periods. All items share the same `effective_from` and `note`.
+
+**Request:**
+```json
+{
+  "effective_from": "2026-06-01",
+  "note": "Q2 server upgrade",
+  "items": [
+    { "category": "database", "cost_idr": 250000 },
+    { "category": "server", "cost_idr": 800000 }
+  ]
+}
+```
+
+**Validation rules:**
+| Field | Rule |
+|-------|------|
+| `effective_from` | Required. Format `YYYY-MM-DD`. Must be day 1 of a month. Max 1 month into the future. |
+| `note` | Optional. Max 500 characters. |
+| `items` | Required. 1–5 items. No duplicate `category` within the request. |
+| `items[].category` | One of: `database`, `redis`, `server`, `domain`, `other`. |
+| `items[].cost_idr` | Integer, range `0` – `1,000,000,000`. |
+
+**Conflict handling:** If any `(category, effective_from)` already exists in the database, the **entire batch is rejected** with `409`. To overwrite, DELETE the existing period first, then PUT again.
+
+**Responses:**
+| Status | Condition |
+|--------|-----------|
+| `200` | Success — returns same shape as `GET /admin/ledger/infra-costs?month={effective_from month}` |
+| `400` | Validation error |
+| `403` | Not superadmin |
+| `409` | Period already exists for that `(category, effective_from)` |
+
+---
+
+### `DELETE /admin/ledger/infra-costs/{period_id}`
+
+**Access:** Superadmin
+
+Removes a single historical period entry.
+
+**Path params:**
+| Param | Note |
+|-------|------|
+| `period_id` | UUID of the period to delete. Returns `400` if not a valid UUID format. |
+
+**Responses:**
+| Status | Condition |
+|--------|-----------|
+| `204` | Deleted (no response body) |
+| `400` | Invalid UUID format |
+| `403` | Not superadmin |
+| `404` | Period not found |
+
+---
+
+### `GET /admin/ledger/exchange-rate`
+
+**Access:** Any admin
+
+Returns current rate, source flag, last update timestamp, and last 10 audit entries.
+
+**Response `200`:**
+```json
+{
+  "usd_to_idr": 16780.5,
+  "source": "manual",
+  "updated_at": "2026-05-17T08:00:00Z",
+  "audit": [
+    {
+      "id": 12,
+      "old_value": "16500.00",
+      "new_value": "16780.50",
+      "changed_by": "admin@example.com",
+      "changed_at": "2026-05-17T08:00:00Z",
+      "reason": "Locking rate for May reporting"
+    }
+  ]
+}
+```
+
+**`source` values:**
+| Value | Meaning | Persisted? | UI hint |
+|-------|---------|------------|---------|
+| `auto` | Auto-refreshed from open.er-api.com (fresh, ≤ 24h old) | yes | Green indicator |
+| `manual` | Admin override active — auto-refresh paused | yes | Yellow/locked indicator |
+| `cached` | Auto-refresh was due but upstream failed; using stored value | no (transient) | Orange warning |
+| `fallback` | No value ever stored; using default 16500 | no (transient) | Red warning |
+
+**Notes:**
+- `audit` is always an array (empty `[]` if no history yet, never `null`).
+- Audit entries come from `system_config_audit` table for the `ledger.usd_to_idr_rate` key.
+
+---
+
+### `PUT /admin/ledger/exchange-rate`
+
+**Access:** Superadmin
+
+Manually override the exchange rate. Pins `source = "manual"` which pauses auto-refresh until explicitly cleared via the refresh endpoint.
+
+**Request:**
+```json
+{
+  "usd_to_idr": 16780.5,
+  "reason": "Locking rate for May reporting"
+}
+```
+
+**Validation:**
+| Field | Rule |
+|-------|------|
+| `usd_to_idr` | Required. Must be strictly greater than `1000` and strictly less than `100000` (exclusive bounds). |
+| `reason` | Required. Non-empty string. |
+
+**Responses:**
+| Status | Condition |
+|--------|-----------|
+| `200` | Updated — returns same shape as `GET /admin/ledger/exchange-rate` |
+| `400` | Validation error |
+| `403` | Not superadmin |
+
+---
+
+### `POST /admin/ledger/exchange-rate/refresh`
+
+**Access:** Superadmin
+
+Force-refresh from upstream API (open.er-api.com) **and clear manual override**. This is the **only way** to exit manual mode.
+
+**Request:** empty body.
+
+**Responses:**
+| Status | Condition |
+|--------|-----------|
+| `200` | Refreshed — returns same shape as `GET /admin/ledger/exchange-rate` |
+| `403` | Not superadmin |
+| `429` | Rate limited (max 6 calls/hour per IP) |
+| `502` | Upstream fetch failed — all rate keys left unchanged |
+
+**Notes:**
+- On success, `source` flips to `"auto"` and auto-refresh resumes normally.
+- On `502`, the admin can retry later. The manual lock (if it was set) remains in place.
+
+**Ledger drill-down pagination:** `/ledger/revenue` and `/ledger/ai-usage` return `rows` (not `items`); `next_cursor` is `""` or absent on the last page; an invalid cursor returns `400` `"ledger validation failed: invalid cursor"`.
+
+**External call:** `GET /admin/ledger` and the refresh route may fetch `https://open.er-api.com/v6/latest/USD` (5 s timeout) when the stored rate is older than 24 h and not pinned manually.
+
+---
+
 ## Admin User Management
 
 ### `GET /admin/admins`
@@ -1464,7 +1800,7 @@ Create a new admin user.
 **Validation:**
 - `email`: valid format, max 254 chars, local part max 64, domain min 3 chars with dot, must be unique
 - `full_name`: non-empty after trim, max 255 chars
-- `password`: 8-72 chars, must contain uppercase + lowercase + digit + special character
+- `password`: 8-72 Unicode characters, at most 72 UTF-8 bytes for bcrypt, and must contain uppercase + lowercase + digit + special character
 - `role`: must be `"admin"` or `"superadmin"`
 
 **Response 201:**
@@ -1513,7 +1849,7 @@ Self-edit for any admin. Updates own name and/or password.
 }
 ```
 
-**Rules:** `full_name` optional (non-empty after trim, max 255 chars). Password change requires `current_password` (bcrypt verified) + `new_password` (8-72 chars, upper+lower+digit+special). Cannot change own email or role. If `must_change_password` is true and password is changed, clears the flag.
+**Rules:** `full_name` optional (non-empty after trim, max 255 chars). Password change requires `current_password` (bcrypt verified) + `new_password` (8-72 Unicode characters, at most 72 UTF-8 bytes, upper+lower+digit+special). Cannot change own email or role. If `must_change_password` is true, only this route with a non-empty `new_password` is allowed. A successful password change clears the flag and invalidates the current JWT, so the admin must log in again.
 
 **Response 200:** `{"message": "Profile updated"}`
 
@@ -1608,7 +1944,7 @@ Reset another admin's password.
 }
 ```
 
-**Validation:** Password must meet policy (8-72 chars, upper+lower+digit+special). Cannot reset your own password (use self-edit instead). Sets `must_change_password = true`.
+**Validation:** Password must meet policy (8-72 Unicode characters, at most 72 UTF-8 bytes, upper+lower+digit+special). Cannot reset your own password (use self-edit instead). Sets `must_change_password = true` and invalidates the target's existing JWTs.
 
 **Response 200:** `{"message": "Password reset", "must_change_password": true}`
 
@@ -1641,7 +1977,7 @@ All errors follow the canonical format from `shared/pkg/httputil`:
 | 403 | Insufficient role (admin trying superadmin-only endpoint, or stale token after demotion) |
 | 404 | Resource not found |
 | 409 | Conflict (email duplicate) |
-| 429 | Rate limit exceeded |
+| 429 | Rate limit exceeded or cooldown active |
 | 500 | Internal server error |
 | 503 | Service unavailable (Redis down, rate limiter fail-closed) |
 
@@ -1658,3 +1994,12 @@ All errors follow the canonical format from `shared/pkg/httputil`:
 | `TRUSTED_PROXY_CIDRS` | No | CIDR ranges for rate limiter forwarding header trust |
 | `ADMIN_SERVICE_HEALTH_URLS` | No | `name=url` pairs for service health checks |
 | `ADMIN_SERVICE_TUNNEL_URLS` | No | `name=url` pairs for tunnel health checks |
+
+---
+
+## Admin Authentication
+
+- Admin login returns a 15-minute access JWT and no refresh token.
+- `must_change_password` is enforced by Argus. While true, only `PUT /admin/admins/me` with a new password is allowed.
+- Password reset/change and role changes invalidate previously issued admin JWTs. Admins log in again after changing their password.
+- Admin activity records include the actor email and resolved client IP.

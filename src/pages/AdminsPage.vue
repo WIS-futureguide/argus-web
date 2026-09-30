@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { useQuery, useQueryClient } from '@tanstack/vue-query'
+import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { useToast } from '@/composables/useToast'
 import { adminsApi, type AdminUser } from '@/lib/api-admins'
@@ -8,6 +9,7 @@ import Modal from '@/components/Modal.vue'
 import type { ApiError } from '@/lib/api'
 
 const auth = useAuthStore()
+const router = useRouter()
 const toast = useToast()
 const queryClient = useQueryClient()
 
@@ -69,6 +71,13 @@ async function handleSelfEdit() {
       return
     }
     const res = await adminsApi.updateMe(body)
+    if (body.new_password) {
+      auth.logout()
+      toast.success('Password diubah, silakan login lagi')
+      closeModal()
+      await router.push({ name: 'login' })
+      return
+    }
     toast.success(res.message)
     invalidate()
     closeModal()

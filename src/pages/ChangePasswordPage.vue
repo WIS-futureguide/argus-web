@@ -30,9 +30,9 @@ async function handleSubmit() {
       current_password: currentPassword.value,
       new_password: newPassword.value,
     })
-    auth.clearMustChangePassword()
-    toast.success('Password berhasil diubah')
-    router.push({ name: 'overview' })
+    auth.logout()
+    toast.success('Password diubah, silakan login lagi')
+    await router.push({ name: 'login' })
   } catch (e) {
     error.value = (e as ApiError).message || 'Gagal mengubah password'
   } finally {
