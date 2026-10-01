@@ -1096,7 +1096,6 @@ Update a config value. Superadmin only.
 When these keys are changed, the response includes a restart warning:
 
 - `analysis.worker_count`
-- `analysis.use_mock_model`
 
 ```json
 {
@@ -1109,7 +1108,7 @@ When these keys are changed, the response includes a restart warning:
 }
 ```
 
-The restart is triggered by the existing `SubscribeKeyChange` mechanism in the worker — admin-service doesn't send SIGTERM directly; it just updates the value and publishes invalidation. The worker's subscription handler does the rest.
+The worker reads this value at startup; restart it to apply changes.
 
 ---
 
@@ -1124,7 +1123,7 @@ The restart is triggered by the existing `SubscribeKeyChange` mechanism in the w
   - `duration` → number input (seconds) with human-readable preview ("5 minutes")
 - **Edit flow:** Click edit icon → fields become editable → type reason → Save button per card
 - **Audit expand:** Click clock icon next to any key → shows last 5 changes inline
-- **Restart warning:** For `analysis.worker_count` and `analysis.use_mock_model`, show confirmation modal before saving: "This change will restart the analysis worker. In-flight jobs will be reclaimed after 90 seconds."
+- **Restart warning:** For `analysis.worker_count`, show confirmation modal before saving: "This change will restart the analysis worker. In-flight jobs will be reclaimed after 90 seconds."
 
 ---
 
@@ -1274,7 +1273,7 @@ Update a prompt template. Superadmin only. Auto-creates a version record.
   "template_key": "analysis.role",
   "version": 4,
   "cache_type": "cached",
-  "cache_warning": "This template is part of the Gemini static cache. Changes take full effect after cache expires (~1 hour) or worker restart.",
+  "cache_warning": "This template is cached by Gemini. After prompt invalidation, Athena replaces the cache before the next analysis.",
   "variable_warnings": ["Variable {{references}} not found in content"]
 }
 ```
@@ -1312,7 +1311,7 @@ Revert a template to a previous version. Superadmin only. Creates a new version 
   "template_key": "analysis.role",
   "version": 4,
   "reverted_from_version": 2,
-  "cache_warning": "This template is part of the Gemini static cache. Changes take full effect after cache expires (~1 hour) or worker restart."
+  "cache_warning": "This template is cached by Gemini. After prompt invalidation, Athena replaces the cache before the next analysis."
 }
 ```
 
@@ -1365,7 +1364,7 @@ Force-restart the analysis worker. Superadmin only. Lives on the prompts page as
 - **Revert:** Click "Revert" on any version → confirmation modal with reason field
 - **Cache badge:** Blue "Cached" or green "Per-request" badge on each template in list and detail view
 - **Restart button:** Prominent button at top of page: "Restart Worker" with confirmation modal. Shows last restart time if available.
-- **Post-save behavior:** If template is cached type, show yellow banner: "Static cache will use old prompt for up to 1 hour. Click 'Restart Worker' for immediate effect."
+- **Post-save behavior:** If template is cached type, show yellow banner: "Athena will refresh the Gemini cache before the next analysis after prompt invalidation."
 
 ---
 
@@ -1399,7 +1398,7 @@ Force-restart the analysis worker. Superadmin only. Lives on the prompts page as
 | Editor style | List + full-screen detail editor | Prompts are long; inline editing is cramped |
 | Versioning | Auto-version on every save | Full audit trail; enables rollback |
 | Change reason | Always mandatory | Prompts directly control AI output quality — traceability critical |
-| Cache warning | Show after saving cached templates | Admin knows when restart is needed vs self-resolving |
+| Cache warning | Show after saving cached templates | Admin knows Athena refreshes the cache on the next analysis |
 | Restart button | On prompts page, superadmin only | Emergency action for immediate cache refresh |
 | Variable validation | Soft warning, not hard block | Admin might intentionally remove a section |
 | Rollback | Creates new version with old content + reason | Preserves full timeline, auditable |

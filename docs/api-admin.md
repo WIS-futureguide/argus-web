@@ -961,7 +961,7 @@ Update a config value.
 }
 ```
 
-**`restart_warning`:** only present (omitempty) for keys `analysis.worker_count` and `analysis.use_mock_model`.
+**`restart_warning`:** only present (omitempty) for key `analysis.worker_count`.
 
 **Errors:**
 
@@ -1210,7 +1210,7 @@ Update a prompt template. Auto-creates a version record.
   "template_key": "analysis.role",
   "version": 4,
   "cache_type": "cached",
-  "cache_warning": "This template is part of the Gemini static cache. Changes take full effect after cache expires (~1 hour) or worker restart.",
+  "cache_warning": "This template is cached by Gemini. After prompt invalidation, Athena replaces the cache before the next analysis.",
   "variable_warnings": ["Variable \"references\" not found in content"]
 }
 ```
