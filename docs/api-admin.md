@@ -1052,7 +1052,9 @@ Full infrastructure status. All checks run in parallel with 3s per-check timeout
 - `latency`: Go duration string from `time.Duration.String()` — e.g. `"5.123ms"`, `"1.2s"` (omitted when unavailable)
 - `error`: string — possible values: `"invalid request"`, `"connection failed"` (omitted when empty)
 
-**`workers`:** always an array (empty `[]` if no active workers).
+**`queue`:** PostgreSQL counts: `pending` = `ready`, `active` = `running`, `dlq` = `dead`, `stale_claims` = running rows with expired leases. JSON field names remain stable. `postgres.outbox_unpublished` now counts ready rows; `postgres.outbox_stuck` counts expired running leases. Old publication timestamps and Redis lists do not affect these counts.
+
+**`workers`:** always an array (empty `[]` if no active workers); Redis heartbeats report liveness only, never job ownership.
 
 **Status values for postgres/redis:** `"healthy"`, `"unhealthy"`, `"timeout"`.
 

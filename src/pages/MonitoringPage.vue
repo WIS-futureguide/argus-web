@@ -90,9 +90,9 @@ function formatUptime(seconds: number): string {
             <dd>{{ data.postgres.pool_in_use }} in use / {{ data.postgres.pool_idle }} idle / {{ data.postgres.pool_total }} total</dd>
             <dt class="text-phosphor-faint">DB SIZE</dt>
             <dd>{{ formatBytes(data.postgres.db_size_bytes) }}</dd>
-            <dt class="text-phosphor-faint">OUTBOX UNPUBLISHED</dt>
-            <dd :class="data.postgres.outbox_unpublished > 0 ? 'text-hazard' : ''">{{ data.postgres.outbox_unpublished }}</dd>
-            <dt class="text-phosphor-faint">OUTBOX STUCK</dt>
+            <dt class="text-phosphor-faint">QUEUE READY</dt>
+            <dd>{{ data.postgres.outbox_unpublished }}</dd>
+            <dt class="text-phosphor-faint">EXPIRED LEASES</dt>
             <dd :class="data.postgres.outbox_stuck > 0 ? 'text-hazard' : ''">{{ data.postgres.outbox_stuck }}</dd>
           </dl>
         </div>
@@ -132,7 +132,7 @@ function formatUptime(seconds: number): string {
             <div class="text-lg" :class="data.queue.dlq > 0 ? 'text-hazard' : 'text-phosphor'">{{ data.queue.dlq }}</div>
           </div>
           <div>
-            <div class="text-phosphor-faint text-[11px] uppercase">STALE CLAIMS</div>
+            <div class="text-phosphor-faint text-[11px] uppercase">EXPIRED LEASES</div>
             <div class="text-lg" :class="data.queue.stale_claims > 0 ? 'text-hazard' : 'text-phosphor'">{{ data.queue.stale_claims }}</div>
           </div>
         </div>

@@ -100,6 +100,20 @@ describe('MonitoringPage', () => {
     expect(wrapper.text()).toContain('12 / 100')
   })
 
+  it('shows ready queue rows without hazard and labels expired leases', async () => {
+    mockStatus.mockResolvedValue(monitoringData)
+    const wrapper = mountPage()
+    await flushPromises()
+
+    expect(wrapper.text()).toContain('QUEUE READY')
+    expect(wrapper.text()).toContain('EXPIRED LEASES')
+    expect(wrapper.text()).not.toContain('OUTBOX')
+    expect(wrapper.text()).not.toContain('STALE CLAIMS')
+    const readyValue = wrapper.findAll('dt').find((dt) => dt.text() === 'QUEUE READY')?.element.nextElementSibling
+    expect(readyValue?.textContent).toBe('2')
+    expect(readyValue?.classList.contains('text-hazard')).toBe(false)
+  })
+
   it('renders redis status', async () => {
     mockStatus.mockResolvedValue(monitoringData)
     const wrapper = mountPage()
