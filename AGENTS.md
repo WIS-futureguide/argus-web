@@ -91,3 +91,8 @@ npm run build      # vue-tsc -b && vite build
 npm test           # vitest
 npm run dev
 ```
+
+Local development proxies `/admin` and `/payments` to Argus, and `/auth` to
+Apollo. Override `VITE_ARGUS_API_TARGET` or `VITE_APOLLO_API_TARGET` when the
+backend services are not reachable at their default local addresses. The
+production API origin remains `https://api.futureguide.id`.

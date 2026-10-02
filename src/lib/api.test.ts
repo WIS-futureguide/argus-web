@@ -48,7 +48,7 @@ describe('api client', () => {
     const result = await api.get('/admin/overview')
 
     expect(globalThis.fetch).toHaveBeenCalledWith(
-      'https://api.futureguide.id/admin/overview',
+      '/admin/overview',
       expect.objectContaining({
         method: 'GET',
         headers: expect.objectContaining({
@@ -70,7 +70,7 @@ describe('api client', () => {
     await api.post('/admin/users/123/grant-tokens', { amount: 5, reason: 'test' })
 
     expect(globalThis.fetch).toHaveBeenCalledWith(
-      'https://api.futureguide.id/admin/users/123/grant-tokens',
+      '/admin/users/123/grant-tokens',
       expect.objectContaining({
         method: 'POST',
         body: JSON.stringify({ amount: 5, reason: 'test' }),
@@ -176,7 +176,7 @@ describe('api client', () => {
     const result = await authApi.login('admin@test.com', 'pass123')
 
     expect(globalThis.fetch).toHaveBeenCalledWith(
-      'https://api.futureguide.id/auth/admin/login',
+      '/auth/admin/login',
       expect.objectContaining({
         method: 'POST',
         body: JSON.stringify({ email: 'admin@test.com', password: 'pass123' }),
@@ -205,5 +205,12 @@ describe('api client', () => {
       'http://localhost:8080/auth/admin/login',
       expect.any(Object)
     )
+  })
+
+  it('uses same-origin paths in dev when no API base is configured', async () => {
+    const { resolveApiBaseUrl } = await import('@/lib/api')
+    expect(resolveApiBaseUrl(true, '')).toBe('')
+    expect(resolveApiBaseUrl(false, '')).toBe('https://api.futureguide.id')
+    expect(resolveApiBaseUrl(true, 'http://localhost:8080/')).toBe('http://localhost:8080')
   })
 })

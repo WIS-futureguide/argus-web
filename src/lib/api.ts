@@ -3,7 +3,11 @@ import { useToast } from '@/composables/useToast'
 import { useRateLimit } from '@/composables/useRateLimit'
 import { router } from '@/router'
 
-const API_BASE = (import.meta.env.VITE_API_BASE_URL || 'https://api.futureguide.id').replace(/\/+$/, '')
+export function resolveApiBaseUrl(dev: boolean, configured: string | undefined): string {
+  return (dev && !configured ? '' : configured || 'https://api.futureguide.id').replace(/\/+$/, '')
+}
+
+const API_BASE = resolveApiBaseUrl(import.meta.env.DEV, import.meta.env.VITE_API_BASE_URL)
 
 export interface ApiError {
   message: string
