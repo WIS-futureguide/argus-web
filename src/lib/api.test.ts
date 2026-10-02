@@ -25,11 +25,14 @@ vi.mock('@/composables/useToast', () => ({
 
 describe('api client', () => {
   beforeEach(() => {
+    vi.resetModules()
+    vi.stubEnv('VITE_API_BASE_URL', '')
     vi.clearAllMocks()
     globalThis.fetch = vi.fn()
   })
 
   afterEach(() => {
+    vi.unstubAllEnvs()
     vi.restoreAllMocks()
   })
 
@@ -45,7 +48,7 @@ describe('api client', () => {
     const result = await api.get('/admin/overview')
 
     expect(globalThis.fetch).toHaveBeenCalledWith(
-      'https://api-admin.futureguide.id/admin/overview',
+      'https://api.futureguide.id/admin/overview',
       expect.objectContaining({
         method: 'GET',
         headers: expect.objectContaining({
@@ -67,7 +70,7 @@ describe('api client', () => {
     await api.post('/admin/users/123/grant-tokens', { amount: 5, reason: 'test' })
 
     expect(globalThis.fetch).toHaveBeenCalledWith(
-      'https://api-admin.futureguide.id/admin/users/123/grant-tokens',
+      'https://api.futureguide.id/admin/users/123/grant-tokens',
       expect.objectContaining({
         method: 'POST',
         body: JSON.stringify({ amount: 5, reason: 'test' }),
@@ -173,12 +176,34 @@ describe('api client', () => {
     const result = await authApi.login('admin@test.com', 'pass123')
 
     expect(globalThis.fetch).toHaveBeenCalledWith(
-      'https://auth.futureguide.id/auth/admin/login',
+      'https://api.futureguide.id/auth/admin/login',
       expect.objectContaining({
         method: 'POST',
         body: JSON.stringify({ email: 'admin@test.com', password: 'pass123' }),
       })
     )
     expect(result.token).toBe('jwt-token')
+  })
+
+  it('uses the configured API origin for both admin and login calls', async () => {
+    vi.stubEnv('VITE_API_BASE_URL', 'http://localhost:8080/')
+    ;(globalThis.fetch as ReturnType<typeof vi.fn>).mockResolvedValue({
+      ok: true,
+      headers: new Headers(),
+      json: () => Promise.resolve({ token: 'jwt-token' }),
+    })
+    const { api, authApi } = await import('@/lib/api')
+    await api.get('/admin/overview')
+    await authApi.login('admin@test.com', 'pass123')
+    expect(globalThis.fetch).toHaveBeenNthCalledWith(
+      1,
+      'http://localhost:8080/admin/overview',
+      expect.any(Object)
+    )
+    expect(globalThis.fetch).toHaveBeenNthCalledWith(
+      2,
+      'http://localhost:8080/auth/admin/login',
+      expect.any(Object)
+    )
   })
 })

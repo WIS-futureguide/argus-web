@@ -3,8 +3,7 @@ import { useToast } from '@/composables/useToast'
 import { useRateLimit } from '@/composables/useRateLimit'
 import { router } from '@/router'
 
-const API_BASE = 'https://api-admin.futureguide.id'
-const AUTH_BASE = 'https://auth.futureguide.id'
+const API_BASE = (import.meta.env.VITE_API_BASE_URL || 'https://api.futureguide.id').replace(/\/+$/, '')
 
 export interface ApiError {
   message: string
@@ -112,7 +111,7 @@ export const api = {
 
 export const authApi = {
   async login(email: string, password: string): Promise<{ token: string }> {
-    const response = await fetch(`${AUTH_BASE}/auth/admin/login`, {
+    const response = await fetch(`${API_BASE}/auth/admin/login`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email, password }),

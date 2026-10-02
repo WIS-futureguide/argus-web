@@ -8,8 +8,8 @@
 ## Overview
 
 Admin dashboard UI for FutureGuide. Consumes the Argus admin API
-(`https://api-admin.futureguide.id`) and Apollo authentication API
-(`https://auth.futureguide.id`). Second-largest repo in the workspace by graph
+(`https://api.futureguide.id`) and Apollo authentication API
+(`https://api.futureguide.id`). Second-largest repo in the workspace by graph
 size (1392 nodes, 93 communities), with a test file beside almost every page.
 
 **Repo:** `WIS-futureguide/argus-web` · **Branch:** `master` ·

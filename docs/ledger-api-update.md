@@ -1,6 +1,6 @@
 # Ledger Page — Frontend API Reference
 
-Base URL: `https://api-admin.futureguide.id` (tunnel) or `http://localhost:8085` (local)
+Base URL: `https://api.futureguide.id` (tunnel) or `http://localhost:8085` (local)
 
 All endpoints require admin JWT in `Authorization: Bearer <token>`. Mutations (PUT/POST/DELETE) require **superadmin** role.
 

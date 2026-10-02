@@ -2,7 +2,7 @@
 
 ## Product
 
-Admin dashboard for FutureGuide — an AI-powered career assessment platform for Indonesian high school students. This frontend consumes the Admin Service API (`https://api-admin.futureguide.id`) and the Auth Service (`https://auth.futureguide.id`).
+Admin dashboard for FutureGuide — an AI-powered career assessment platform for Indonesian high school students. This frontend consumes the Admin Service API (`https://api.futureguide.id`) and the Auth Service (`https://api.futureguide.id`).
 
 ## Ubiquitous Language
 
@@ -105,7 +105,7 @@ Stale token rejection: if an admin is demoted, existing JWTs with the old role a
 ```
 
 ### Authentication
-- Login: POST `https://auth.futureguide.id/auth/admin/login` with `{email, password}` → returns `{token: string}` (JWT)
+- Login: POST `https://api.futureguide.id/auth/admin/login` with `{email, password}` → returns `{token: string}` (JWT)
 - JWT stored in localStorage, decoded client-side for role + must_change_password (no `/me` endpoint exists)
 - JWT payload assumed: `{sub: admin_id, email, role, must_change_password, exp}`
 - Token expiry check on route navigation (decode exp, compare to Date.now)
@@ -114,7 +114,7 @@ Stale token rejection: if an admin is demoted, existing JWTs with the old role a
 - Global 403 interceptor: toast "Session expired or permissions changed" → force re-login (stale role)
 - Superadmin-only UI elements: hidden (not rendered), not disabled
 - No token refresh — on 401, force re-login
-- Login is cross-origin (`auth.futureguide.id` → `api-admin.futureguide.id`); CORS handled server-side
+- Login and admin calls share `https://api.futureguide.id`; the dashboard origin is `https://admin.futureguide.id`, allowed by backend CORS.
 
 ### Data Fetching
 - TanStack Query for all API calls
@@ -155,8 +155,8 @@ Stale token rejection: if an admin is demoted, existing JWTs with the old role a
 
 See `api-admin.md` for full endpoint documentation.
 
-- Base URL: `https://api-admin.futureguide.id`
-- Auth URL: `https://auth.futureguide.id/auth/admin/login`
+- Base URL: `https://api.futureguide.id`
+- Auth URL: `https://api.futureguide.id/auth/admin/login`
 - All responses: `{"message": "..."}` for errors
 - Pagination: keyset cursor, `next_cursor` omitted (not null) when no more pages
 - Nullable vs omitted: see api-admin.md § "Nullable & Omitted Fields"

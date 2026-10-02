@@ -858,29 +858,9 @@ Single endpoint returning full infrastructure status. All checks run in parallel
   ],
   "tunnel": [
     {
-      "hostname": "auth.futureguide.id",
+      "hostname": "api.futureguide.id",
       "status": "healthy",
       "response_ms": 120
-    },
-    {
-      "hostname": "pay.futureguide.id",
-      "status": "healthy",
-      "response_ms": 135
-    },
-    {
-      "hostname": "api-admin.futureguide.id",
-      "status": "healthy",
-      "response_ms": 110
-    },
-    {
-      "hostname": "notify.futureguide.id",
-      "status": "healthy",
-      "response_ms": 125
-    },
-    {
-      "hostname": "chat.futureguide.id",
-      "status": "healthy",
-      "response_ms": 130
     }
   ],
   "workers": [
@@ -958,7 +938,7 @@ Toggle maintenance mode. Superadmin only.
 | Variable | Purpose |
 |----------|---------|
 | `ADMIN_SERVICE_HEALTH_URLS` | Comma-separated `name=url` pairs for service health checks |
-| `TUNNEL_HOSTNAMES` | Comma-separated public hostnames to check (default: `auth.futureguide.id,pay.futureguide.id,api-admin.futureguide.id,notify.futureguide.id,chat.futureguide.id`) |
+| `ADMIN_SERVICE_TUNNEL_URLS` | `name=url` pairs (default: `api=https://api.futureguide.id/health`, Apollo only; Argus health is internal) |
 
 ---
 

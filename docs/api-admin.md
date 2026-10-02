@@ -1,11 +1,11 @@
 # Admin Service API Reference
 
-Base URL (tunnel): `https://api-admin.futureguide.id`
+Base URL (tunnel): `https://api.futureguide.id`
 Base URL (local): `http://localhost:8085`
 
 This reference covers 45 administrative routes.
 
-All `/admin/*` endpoints require a valid JWT issued by `POST /auth/admin/login` at `https://auth.futureguide.id/auth/admin/login`. Include it as a Bearer token:
+All `/admin/*` endpoints require a valid JWT issued by `POST /auth/admin/login` at `https://api.futureguide.id/auth/admin/login`. Include it as a Bearer token:
 
 ```
 Authorization: Bearer <jwt>
@@ -1033,18 +1033,19 @@ Full infrastructure status. All checks run in parallel with 3s per-check timeout
     "stale_claims": 0
   },
   "services": {
-    "auth": { "status": "healthy", "status_code": 200, "latency": "5.123ms" },
-    "assessment": { "status": "healthy", "status_code": 200, "latency": "8.456ms" }
+    "apollo": { "status": "healthy", "status_code": 200, "latency": "5.123ms" },
+    "argus": { "status": "healthy", "status_code": 200, "latency": "8.456ms" }
   },
   "tunnel": {
-    "auth": { "status": "healthy", "status_code": 200, "latency": "120.789ms" },
-    "pay": { "status": "unhealthy", "error": "connection failed" }
+    "api": { "status": "healthy", "status_code": 200, "latency": "120.789ms" }
   },
   "workers": [
     { "worker_id": "worker-abc123", "ttl_seconds": 25 }
   ]
 }
 ```
+
+Service checks default to the two internal APIs, keyed by `apollo` and `argus`. The public tunnel check defaults to `api=https://api.futureguide.id/health` and reaches Apollo only; Argus is checked internally. Override via `ADMIN_SERVICE_HEALTH_URLS` / `ADMIN_SERVICE_TUNNEL_URLS` (`name=url` pairs).
 
 **`services` and `tunnel`:** maps keyed by service name (not arrays). Each value is a `ServiceCheck`:
 - `status`: `"healthy"`, `"unhealthy"`, or `"timeout"`
