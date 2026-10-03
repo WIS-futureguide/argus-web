@@ -25,3 +25,20 @@ vite.config.d.ts
 vite.config.js
 
 .vercel
+
+# IDE / OS (additions)
+
+# Keys and certificates
+*.pem
+*.key
+
+# Test artifacts
+coverage/
+
+# Local agent / graph tooling
+.serena/
+.playwright-mcp/
+.claude/settings.local.json
+graphify-out/
+graphify-out-*/
+CODEMAP.md
