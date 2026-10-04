@@ -1,6 +1,6 @@
 # Argus Web
 
-Public Vue 3 admin dashboard for FutureGuide. This repository is `WIS-futureguide/argus-web` and uses the `master` branch. It provides user, assessment, monitoring, prompt, ledger, and admin-management screens aligned with the current Argus API. Admin and authentication requests share `https://api.futureguide.id`. Set the public build-time `VITE_API_BASE_URL` to override this origin; an empty value uses the default. The dashboard production target is `https://admin.futureguide.id` behind Cloudflare Access.
+Public Vue 3 admin dashboard for FutureGuide. This repository is `WIS-futureguide/argus-web` and uses the `master` branch. It provides user, assessment, monitoring, prompt, Potensi catalog, ledger, and admin-management screens aligned with the current Argus API. Admin and authentication requests share `https://api.futureguide.id`. Set the public build-time `VITE_API_BASE_URL` to override this origin; an empty value uses the default. The dashboard production target is `https://admin.futureguide.id` behind Cloudflare Access.
 
 Run `npm ci` to install dependencies, `npm run build` to build the app, and `npm run test:run` to run its tests.
 
@@ -28,3 +28,20 @@ rollback protect each release. A push to `master` becomes a production release
 once that timer is enabled. The sibling Atlas `docs/deploy.md` section
 "Frontend auto-deploy" covers prerequisites, timer pause and manual rollback.
 The public admin hostname still needs its planned Cloudflare route.
+
+## Potensi catalog (PS3)
+
+`/app/potensi` lists versions with backend keyset cursors; each version detail
+shows the 180 catalog entries, RIASEC/OCEAN/virtue filters and paginated audit
+history. OCEAN's fifth catalog dimension is ES (emotional stability).
+Admins read; superadmins clone the active version, edit draft entries, and
+publish after explicit confirmation. Active and retired versions are immutable.
+The editor warns for `skill`, `kelemahan`, and `diagnos` in all four text fields;
+these are editorial warnings, while Argus validates and audits each mutation.
+Publication changes historical results, share links and future PDF reads.
+Errors preserve unsaved form text; successful writes refetch detail and audit.
+
+Verification: `npm run build && npm run test:run`; PS3 adds 18 component/client
+cases (292 total). An isolated local Docker Argus/PG/Redis rehearsal exercises
+draft → edit → confirmation → publish → audit, plus admin read-only access.
+No fixtures or credentials belong in this public repository.

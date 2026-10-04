@@ -27,6 +27,7 @@ const sections = [
     label: 'AI ENGINE',
     items: [
       { name: 'prompts', label: 'Prompts', path: '/app/prompts' },
+      { name: 'potensi', label: 'Potensi', path: '/app/potensi' },
     ],
   },
   {

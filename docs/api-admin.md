@@ -3,7 +3,8 @@
 Base URL (tunnel): `https://api.futureguide.id`
 Base URL (local): `http://localhost:8085`
 
-This reference covers 45 administrative routes.
+The current Argus API has 51 administrative routes. Potensi catalog routes
+are documented below (PS3); the backend owns the full canonical reference.
 
 All `/admin/*` endpoints require a valid JWT issued by `POST /auth/admin/login` at `https://api.futureguide.id/auth/admin/login`. Include it as a Bearer token:
 
@@ -2006,3 +2007,56 @@ All errors follow the canonical format from `shared/pkg/httputil`:
 - `must_change_password` is enforced by Argus. While true, only `PUT /admin/admins/me` with a new password is allowed.
 - Password reset/change and role changes invalidate previously issued admin JWTs. Admins log in again after changing their password.
 - Admin activity records include the actor email and resolved client IP.
+
+## Potensi catalog (D42 / PS2-b-a)
+
+Six routes manage the versioned 180-entry editorial catalog. Both admin roles
+may read; only superadmin may mutate. All routes use normal REST deadlines,
+admin JWT verification (including current role/password checks), and the existing
+60/minute per-route rate limit.
+
+| Method | Path | Role | Result |
+|---|---|---|---|
+| GET | `/admin/potensi/versions?limit=20&cursor=...` | admin/superadmin | `{versions:[...],next_cursor?}`; limit 1–50, descending `(created_at,id)` cursor |
+| GET | `/admin/potensi/versions/{id}` | admin/superadmin | Version header plus `entries` |
+| GET | `/admin/potensi/versions/{id}/audit?limit=20&cursor=...` | admin/superadmin | `{audit:[...],next_cursor?}`; limit 1–50, descending `(created_at,id)` cursor |
+| POST | `/admin/potensi/versions` | superadmin | 201; `{label:"v2"}` clones all entries from the active version into a draft |
+| PUT | `/admin/potensi/versions/{id}/entries/{cell_id}` | superadmin | 200 `{updated:true}`; replaces the five editorial fields of a draft entry |
+| POST | `/admin/potensi/versions/{id}/publish` | superadmin | 200 `{published:true}`; draft becomes active, previous active becomes retired |
+
+Version headers contain `id`, `label`, `status`, nullable `created_by`,
+`created_at`, `updated_at`. Entries contain `cell_id`, `name`, `description`,
+`example_activities`, `example_majors`. IDs are UUIDs; cell IDs are the fixed
+RIASEC–OCEAN–virtue universe, e.g. `R-O-Wisdom`. Entry lists use stable cell-ID order;
+heatmaps use the formula's display order. Names describe everyday tendencies in
+one or two words; names are unique within a version. Examples are text with
+semicolon-separated suggestions. All four text fields are required on PUT;
+`cell_id` in the body is optional and must match the route when supplied.
+
+Mutation JSON is limited to 16 KiB and rejects unknown fields/trailing JSON.
+Labels are trimmed, nonblank, unique, and at most 80 characters; name/description/
+activities/majors limits are 120/1000/1000/500 Unicode characters.
+
+Active and retired versions are immutable. Create another draft to change the
+published catalog. Publication checks all 180 distinct valid cells and their text
+inside a version-row-locked transaction. A catalog advisory lock serializes
+publication and draft cloning across Argus replicas. Edit and publish share the
+version row lock. Draft creation, edit, and publication write actor email, trusted
+client IP, resource version UUID, and details to `admin_activity_log` in the same
+transaction (`potensi_create_draft`, `potensi_edit_entry`, `potensi_publish`).
+A failed audit rolls back the mutation. Publication invalidates
+`fg:potensi:invalidate` only after commit; Redis failure is logged and does not
+undo the committed publication. Reader caches resync every 60 seconds and after
+reconnect. Historical results/shared links/PDF will read the current catalog in
+PS2-b-b; no score/formula change or stored-result backfill occurs.
+
+Errors: 400 invalid body/cursor/UUID/cell/text or incomplete catalog; 403 forbidden
+role; 404 unknown version/entry or no active source catalog; 409 immutable version
+or duplicate label/name; 500 unexpected database failure. Missing scores are an
+assessment-read concern (PS2-b-b), not a catalog mutation error.
+
+PS3: audit rows expose `id`, `action`, `admin_email`, `ip_address`, `details`,
+`created_at`, scoped to the version UUID and `resource_type=potensi_catalog`.
+An existing version with no history returns `audit:[]`; an unknown version
+returns 404. Both roles may read; no global activity log is exposed. Potensi
+PUT preflight accepts the allowed admin origin; unlisted origins remain denied.

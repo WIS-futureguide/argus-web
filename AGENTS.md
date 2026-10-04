@@ -52,11 +52,11 @@ not require removing them.
 ```
 src/pages/         one page per admin module, each with a .test.ts beside it:
                    Overview, Assessments (+Detail, +Chat, +Compare), Users
-                   (+Detail), Config, Monitoring, Prompts (+Detail), Ledger,
+                   (+Detail), Config, Monitoring, Prompts (+Detail), Potensi (+Detail), Ledger,
                    Admins, Login, ChangePassword
 src/lib/api*.ts    one typed API client per admin module (api-overview,
                    api-assessments, api-users, api-config, api-monitoring,
-                   api-prompts, api-admins, api-ledger)
+                   api-prompts, api-potensi, api-admins, api-ledger)
 src/lib/api.ts     shared fetch wrapper, auth header, error shape
 src/stores/auth.ts Pinia auth store (JWT from POST /auth/admin/login)
 src/components/    shared components + ledger/ and users/ subtrees
@@ -107,3 +107,9 @@ Docker context excludes `.env*`, keys and local tooling. Atlas supplies the
 read-only root, `/tmp` tmpfs, private web network and memory/capability limits.
 No host port or datastore network belongs on this service. Auto-deploy for
 Argus remains PW6-c/P25b; laptop 1 keeps manual Argus deployment (D41).
+
+PS3: Potensi versions/detail use Vue Query and keyset list/audit pagination.
+Keep superadmin edits limited to drafts, publication confirmation explicit,
+RIASEC/OCEAN/virtue filters (ES, not raw N), and D42 editorial warnings.
+All catalog reads are available to admins; backend authorization remains final.
+Build + 292 tests include 18 Potensi component/API cases.
