@@ -20,5 +20,11 @@ Use the sibling Atlas application Compose `frontend` profile. The service has
 no host port and joins the isolated web bridge; it receives no runtime `.env`
 and cannot reach the datastore bridge. Read-only rootfs needs the provided
 `/tmp` tmpfs. Argus deployment remains manual on the development laptop;
-two-frontend auto-deploy and production-host activation follow in PW6-c/P25b.
+Atlas PW6-c implements the two-frontend pull deployer and host-a user timer;
+production-host activation follows in P25b. The public repository is fetched
+via HTTPS without private account credentials. Docker build/test gates,
+in-container `/healthz`, rotated logs, three retained tags and automatic
+rollback protect each release. A push to `master` becomes a production release
+once that timer is enabled. The sibling Atlas `docs/deploy.md` section
+"Frontend auto-deploy" covers prerequisites, timer pause and manual rollback.
 The public admin hostname still needs its planned Cloudflare route.
