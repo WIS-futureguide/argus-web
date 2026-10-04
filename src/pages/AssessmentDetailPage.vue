@@ -331,6 +331,7 @@ function goToChat() {
         </div>
         <div v-if="analysisResult.career_pathing.role_prospects.length">
           <div class="text-xs text-phosphor-dim mb-2">ROLE PROSPECTS:</div>
+          <p class="text-xs text-phosphor-faint mb-2">Perkiraan umum, bukan data pasar.</p>
           <div class="space-y-3">
             <div v-for="(role, i) in analysisResult.career_pathing.role_prospects" :key="i" class="border border-crt-border p-3">
               <div class="text-xs text-phosphor font-bold mb-1">{{ role.role_title }}</div>
@@ -341,8 +342,6 @@ function goToChat() {
                 <dd>{{ role.market_outlook }}</dd>
                 <dt class="text-phosphor-faint">AUTOMATION RISK</dt>
                 <dd>{{ role.automation_risk }}</dd>
-                <dt class="text-phosphor-faint">WAGE ({{ role.wage_structure.currency }})</dt>
-                <dd>Entry {{ role.wage_structure.entry_level }} / Jr {{ role.wage_structure.junior }} / Sr {{ role.wage_structure.senior }} / Max {{ role.wage_structure.max_potential }}</dd>
               </dl>
             </div>
           </div>

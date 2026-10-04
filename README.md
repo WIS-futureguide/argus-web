@@ -45,3 +45,7 @@ Verification: `npm run build && npm run test:run`; PS3 adds 18 component/client
 cases (292 total). An isolated local Docker Argus/PG/Redis rehearsal exercises
 draft → edit → confirmation → publish → audit, plus admin read-only access.
 No fixtures or credentials belong in this public repository.
+
+PS4-b-b-b-b-a: assessment detail/compare suppress legacy salary fields and label
+career estimates “Perkiraan umum, bukan data pasar.”. Stored results and existing
+role/persona narratives remain readable; qualitative schema follows next.

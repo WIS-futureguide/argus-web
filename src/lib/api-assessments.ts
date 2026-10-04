@@ -95,14 +95,6 @@ export interface AssessmentDetail {
         match_reason: string
         market_outlook: string
         automation_risk: string
-        wage_structure: {
-          currency: string
-          entry_level: string
-          junior: string
-          senior: string
-          max_potential: string
-          average: string
-        }
       }[]
     }
     student_recommendations: {

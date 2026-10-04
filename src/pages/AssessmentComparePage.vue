@@ -586,6 +586,7 @@ const columns = [
           </div>
           <div>
             <div class="text-[11px] text-phosphor-faint mb-2 uppercase">ROLE PROSPECTS</div>
+            <p class="text-xs text-phosphor-faint mb-2">Perkiraan umum, bukan data pasar.</p>
             <div class="grid gap-3" :class="compareGridClass">
               <div v-for="(r, i) in results" :key="i">
                 <template v-if="r?.analysis_result?.career_pathing?.role_prospects?.length">
@@ -593,7 +594,6 @@ const columns = [
                     <div v-for="(role, j) in r.analysis_result.career_pathing.role_prospects" :key="j" class="border border-crt-border p-2">
                       <div class="text-xs text-phosphor font-bold">{{ role.role_title }}</div>
                       <div class="text-[11px] text-phosphor-faint mt-0.5">{{ role.match_reason }}</div>
-                      <div class="text-[11px] text-phosphor-dim mt-1">{{ role.wage_structure.currency }} {{ role.wage_structure.entry_level }} — {{ role.wage_structure.max_potential }}</div>
                     </div>
                   </div>
                 </template>

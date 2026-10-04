@@ -181,6 +181,22 @@ describe('AssessmentDetailPage', () => {
     expect(wrapper.text()).toContain('Daniel Kahneman')
   })
 
+  it.each(['legacy', 'empty', 'missing'])('hides salary fields for %s results', async (kind) => {
+    const detail = structuredClone(fullDetail)
+    const role = detail.analysis_result.career_pathing.role_prospects[0]!
+    if (kind === 'empty') Object.assign(role, { wage_structure: {} })
+    if (kind === 'missing') Reflect.deleteProperty(role, 'wage_structure')
+    mockDetail.mockResolvedValue(detail)
+    const wrapper = mountPage()
+    await flushPromises()
+    expect(wrapper.text()).toContain('UX Researcher')
+    expect(wrapper.text()).toContain('High Investigative + Artistic')
+    expect(wrapper.text()).toContain('Perkiraan umum, bukan data pasar.')
+    for (const forbidden of ['WAGE', 'IDR', '8000000', '12000000', '20000000', '30000000', '15000000']) {
+      expect(wrapper.text()).not.toContain(forbidden)
+    }
+  })
+
   it('renders chat summary with view button', async () => {
     mockDetail.mockResolvedValue(fullDetail)
     const wrapper = mountPage()

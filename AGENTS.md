@@ -113,3 +113,9 @@ Keep superadmin edits limited to drafts, publication confirmation explicit,
 RIASEC/OCEAN/virtue filters (ES, not raw N), and D42 editorial warnings.
 All catalog reads are available to admins; backend authorization remains final.
 Build + 292 tests include 18 Potensi component/API cases.
+
+PS4-b-b-b-b-a: assessment detail/compare never render `wage_structure`, including
+legacy results with populated, empty or missing salary fields. The view-facing
+API type omits wages; backend persistence is unchanged. Career estimates carry
+“Perkiraan umum, bukan data pasar.”. New qualitative schema follows in
+PS4-b-b-b-b-b. Keep regressions for both pages; no salary assumptions in templates.
