@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
+import { careerEstimateText } from '@/lib/career-estimate'
 import { useRoute, useRouter } from 'vue-router'
 import { useQuery } from '@tanstack/vue-query'
 import { assessmentsApi, type ScoreItem } from '@/lib/api-assessments'
@@ -339,9 +340,9 @@ function goToChat() {
                 <dt class="text-phosphor-faint">MATCH REASON</dt>
                 <dd>{{ role.match_reason }}</dd>
                 <dt class="text-phosphor-faint">MARKET OUTLOOK</dt>
-                <dd>{{ role.market_outlook }}</dd>
+                <dd>{{ careerEstimateText(role.market_outlook) }}</dd>
                 <dt class="text-phosphor-faint">AUTOMATION RISK</dt>
-                <dd>{{ role.automation_risk }}</dd>
+                <dd>{{ careerEstimateText(role.automation_risk) }}</dd>
               </dl>
             </div>
           </div>

@@ -49,3 +49,9 @@ No fixtures or credentials belong in this public repository.
 PS4-b-b-b-b-a: assessment detail/compare suppress legacy salary fields and label
 career estimates “Perkiraan umum, bukan data pasar.”. Stored results and existing
 role/persona narratives remain readable; qualitative schema follows next.
+
+PS4-b-b-b-b-b-b-a: assessment estimates accept historical strings or new
+`{label,sentence}` objects. Detail renders Indonesian enum labels plus sentences;
+comparison retains its existing role/match content for both shapes. Missing/null
+estimates render empty. Keep “Perkiraan umum, bukan data pasar.” and suppress
+salary figures. Live producer activation remains PS4-b-b-b-b-b-b-b.

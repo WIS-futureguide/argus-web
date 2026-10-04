@@ -181,6 +181,23 @@ describe('AssessmentDetailPage', () => {
     expect(wrapper.text()).toContain('Daniel Kahneman')
   })
 
+  it('renders qualitative estimates with localized labels and the qualifier', async () => {
+    const detail = structuredClone(fullDetail)
+    Object.assign(detail.analysis_result.career_pathing.role_prospects[0]!, {
+      market_outlook: { label: 'growing', sentence: 'Kebutuhan dapat berkembang.' },
+      automation_risk: { label: 'medium', sentence: 'Sebagian tugas dapat diotomasi.' },
+    })
+    mockDetail.mockResolvedValue(detail)
+    const wrapper = mountPage()
+    await flushPromises()
+    expect(wrapper.text()).toContain('Berkembang: Kebutuhan dapat berkembang.')
+    expect(wrapper.text()).toContain('Sedang: Sebagian tugas dapat diotomasi.')
+    expect(wrapper.text()).toContain('Perkiraan umum, bukan data pasar.')
+    expect(wrapper.text()).not.toContain('"label"')
+    expect(wrapper.text()).not.toContain('8000000')
+    wrapper.unmount()
+  })
+
   it.each(['legacy', 'empty', 'missing'])('hides salary fields for %s results', async (kind) => {
     const detail = structuredClone(fullDetail)
     const role = detail.analysis_result.career_pathing.role_prospects[0]!

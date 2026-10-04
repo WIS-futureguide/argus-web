@@ -119,3 +119,9 @@ legacy results with populated, empty or missing salary fields. The view-facing
 API type omits wages; backend persistence is unchanged. Career estimates carry
 “Perkiraan umum, bukan data pasar.”. New qualitative schema follows in
 PS4-b-b-b-b-b. Keep regressions for both pages; no salary assumptions in templates.
+
+PS4-b-b-b-b-b-b-a: assessment estimates accept historical strings or new
+`{label,sentence}` objects. Detail renders Indonesian enum labels plus sentences;
+comparison retains its existing role/match content for both shapes. Missing/null
+estimates render empty. Keep “Perkiraan umum, bukan data pasar.” and suppress
+salary figures. Live producer activation remains PS4-b-b-b-b-b-b-b.

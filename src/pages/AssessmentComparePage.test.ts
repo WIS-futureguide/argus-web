@@ -29,7 +29,8 @@ function legacyDetail(id: string, kind: string) {
       career_pathing: {
         top_industries: ['Penelitian'], ideal_work_environment: 'Ruang diskusi',
         role_prospects: [{ role_title: 'Peneliti', match_reason: 'Minat investigatif',
-          market_outlook: 'Peluang umum', automation_risk: 'Rendah',
+          market_outlook: kind === 'qualitative' ? { label: 'stable', sentence: 'Peluang umum.' } : 'Peluang umum',
+          automation_risk: kind === 'qualitative' ? { label: 'low', sentence: 'Pertimbangan manusia diperlukan.' } : 'Rendah',
           ...(kind === 'missing' ? {} : { wage_structure: wage }),
         }],
       },
@@ -41,7 +42,7 @@ function legacyDetail(id: string, kind: string) {
 }
 
 describe('AssessmentComparePage legacy career results', () => {
-  it.each(['legacy', 'empty', 'missing'])('compares %s results without salary data', async (kind) => {
+  it.each(['legacy', 'empty', 'missing', 'qualitative'])('compares %s results without salary data', async (kind) => {
     mockDetail.mockImplementation((id: string) => Promise.resolve(legacyDetail(id, kind)))
     const router = createRouter({
       history: createMemoryHistory(),

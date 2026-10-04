@@ -1,4 +1,5 @@
 import { api } from '@/lib/api'
+import type { CareerEstimate } from '@/lib/career-estimate'
 
 export interface AssessmentListItem {
   id: string
@@ -93,8 +94,8 @@ export interface AssessmentDetail {
       role_prospects: {
         role_title: string
         match_reason: string
-        market_outlook: string
-        automation_risk: string
+        market_outlook?: CareerEstimate
+        automation_risk?: CareerEstimate
       }[]
     }
     student_recommendations: {
