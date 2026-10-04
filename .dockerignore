@@ -1,0 +1,14 @@
+node_modules
+dist
+.git
+.env*
+graphify-out
+CODEMAP.md
+coverage
+.claude
+.serena
+.agents
+*.key
+*.pem
+*.tsbuildinfo
+npm-debug.log*

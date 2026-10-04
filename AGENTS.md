@@ -96,3 +96,14 @@ Local development proxies `/admin` and `/payments` to Argus, and `/auth` to
 Apollo. Override `VITE_ARGUS_API_TARGET` or `VITE_APOLLO_API_TARGET` when the
 backend services are not reachable at their default local addresses. The
 production API origin remains `https://api.futureguide.id`.
+
+## Container contract (PW6-b)
+
+`Dockerfile` has deps/build/gate/runtime stages. The runtime depends on the gate
+(build + 274 tests), contains only Vite static output, and runs non-root nginx
+on port 80. Keep `/healthz`, SPA fallback, hashed asset caching, missing asset
+404s and security headers. `VITE_API_BASE_URL` is public build-time config only;
+Docker context excludes `.env*`, keys and local tooling. Atlas supplies the
+read-only root, `/tmp` tmpfs, private web network and memory/capability limits.
+No host port or datastore network belongs on this service. Auto-deploy for
+Argus remains PW6-c/P25b; laptop 1 keeps manual Argus deployment (D41).

@@ -5,3 +5,20 @@ Public Vue 3 admin dashboard for FutureGuide. This repository is `WIS-futureguid
 Run `npm ci` to install dependencies, `npm run build` to build the app, and `npm run test:run` to run its tests.
 
 Local Docker hot reload: run `../atlas/scripts/dev.sh --web up`; see `../atlas/docs/operations.md` (Dev mode).
+
+## Container deployment (PW6-b)
+
+`docker build -t argus-web:local .` runs `npm ci`, `npm run build`, and
+`npm run test:run` in Docker. Only the public `VITE_API_BASE_URL` build argument
+is supported (default `https://api.futureguide.id`); never pass secrets.
+The runtime contains static assets only, runs nginx as a non-root user on port
+80, and probes `/healthz`. Deep routes use SPA fallback; hashed assets cache for
+one year and missing assets return 404. Security headers allow the existing
+Google Fonts stylesheet/font origins.
+
+Use the sibling Atlas application Compose `frontend` profile. The service has
+no host port and joins the isolated web bridge; it receives no runtime `.env`
+and cannot reach the datastore bridge. Read-only rootfs needs the provided
+`/tmp` tmpfs. Argus deployment remains manual on the development laptop;
+two-frontend auto-deploy and production-host activation follow in PW6-c/P25b.
+The public admin hostname still needs its planned Cloudflare route.
