@@ -1,5 +1,6 @@
 import { api } from '@/lib/api'
 import type { CareerEstimate } from '@/lib/career-estimate'
+import type { Claim } from '@/lib/claim'
 
 export interface AssessmentListItem {
   id: string
@@ -73,15 +74,14 @@ export interface AssessmentDetail {
   analysis_result: {
     profile_summary: {
       signature_title: string
-      signature_description: string
+      signature_description: string | Claim
       learning_style?: {
         preference: string
         environment: string
       }
     }
     detailed_analysis: {
-      strengths: string[]
-      weaknesses: string[]
+      strengths: (string | Claim)[]
       team_dynamics: {
         natural_role?: string
         collaboration_style?: string
@@ -93,7 +93,7 @@ export interface AssessmentDetail {
       ideal_work_environment: string
       role_prospects: {
         role_title: string
-        match_reason: string
+        match_reason: string | Claim
         market_outlook?: CareerEstimate
         automation_risk?: CareerEstimate
       }[]

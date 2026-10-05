@@ -125,3 +125,13 @@ PS4-b-b-b-b-b-b-a: assessment estimates accept historical strings or new
 comparison retains its existing role/match content for both shapes. Missing/null
 estimates render empty. Keep “Perkiraan umum, bukan data pasar.” and suppress
 salary figures. Live producer activation remains PS4-b-b-b-b-b-b-b.
+
+PS4-b-b-b-b-b-b-b-b-b-a (R19 Claim): assessment detail/compare render narrative
+`Claim {text,reference_ids}` values via `claimText()`, with historical string
+compatibility for `signature_description`, `strengths[]` and `match_reason`.
+Reference UUIDs stay out of visible narrative. Retired `weaknesses` is omitted
+from the view type and both templates; `development_areas` remains readable.
+Object/string estimate readers and the estimate qualifier are preserved.
+Synthetic typed fixtures follow Argus's direct Atlas-model JSONB scan; detail
+and compare regressions cover object, string and mixed claims, plus both
+estimate shapes. Template/Potensi/worker rollout remains a separate backend unit.

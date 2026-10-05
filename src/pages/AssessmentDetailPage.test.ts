@@ -4,6 +4,7 @@ import { createTestingPinia } from '@pinia/testing'
 import { createRouter, createMemoryHistory } from 'vue-router'
 import { VueQueryPlugin, QueryClient } from '@tanstack/vue-query'
 import AssessmentDetailPage from '@/pages/AssessmentDetailPage.vue'
+import { claimDetail } from './fixtures/assessment-detail'
 
 const mockDetail = vi.fn()
 
@@ -167,7 +168,8 @@ describe('AssessmentDetailPage', () => {
     await flushPromises()
     expect(wrapper.text()).toContain('The Analytical Creator')
     expect(wrapper.text()).toContain('Problem solving')
-    expect(wrapper.text()).toContain('Impatience')
+    expect(wrapper.text()).not.toContain('Impatience')
+    expect(wrapper.text()).not.toContain('WEAKNESSES')
     expect(wrapper.text()).toContain('Technology')
     expect(wrapper.text()).toContain('Design')
     expect(wrapper.text()).toContain('Remote')
@@ -195,6 +197,29 @@ describe('AssessmentDetailPage', () => {
     expect(wrapper.text()).toContain('Perkiraan umum, bukan data pasar.')
     expect(wrapper.text()).not.toContain('"label"')
     expect(wrapper.text()).not.toContain('8000000')
+    wrapper.unmount()
+  })
+
+  it.each([
+    ['object', 'object'], ['object', 'string'],
+    ['string', 'object'], ['string', 'string'],
+    ['mixed', 'object'], ['mixed', 'string'],
+  ] as const)('renders %s claims with %s estimates as narrative text', async (claimKind, estimateKind) => {
+    mockDetail.mockResolvedValue(claimDetail('a1', claimKind, estimateKind))
+    const wrapper = mountPage()
+    await flushPromises()
+    for (const retained of ['Profil penuh rasa ingin tahu', 'Menimbang sudut pandang',
+      'Mencari pola gagasan', 'Minat investigatif', 'Latihan mengambil keputusan',
+      'Coba pilihan kecil setiap hari.', 'Perkiraan umum, bukan data pasar.']) {
+      expect(wrapper.text()).toContain(retained)
+    }
+    const prefix = estimateKind === 'object' ? 'Stabil: ' : ''
+    expect(wrapper.text()).toContain(`${prefix}Peluang umum dapat bertahan.`)
+    expect(wrapper.text()).toContain('Pertimbangan manusia diperlukan.')
+    for (const forbidden of ['reference_ids', '"text"', '{"text"', '[object Object]',
+      '00000000-0000-4000-8000-000000000001', 'WEAKNESSES', 'WAGE']) {
+      expect(wrapper.text()).not.toContain(forbidden)
+    }
     wrapper.unmount()
   })
 

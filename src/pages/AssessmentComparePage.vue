@@ -2,6 +2,7 @@
 import { ref, computed, watch, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useQuery } from '@tanstack/vue-query'
+import { claimText } from '@/lib/claim'
 import { useCursorPagination } from '@/composables/useCursorPagination'
 import { assessmentsApi, type AssessmentDetail, type AssessmentListFilters, type AssessmentListItem, type AnswerItem } from '@/lib/api-assessments'
 
@@ -511,7 +512,7 @@ const columns = [
             <div v-for="(r, i) in results" :key="i">
               <template v-if="r?.analysis_result?.profile_summary">
                 <div class="text-sm text-phosphor font-bold mb-1">{{ r.analysis_result.profile_summary.signature_title }}</div>
-                <div class="text-xs text-phosphor-dim leading-relaxed">{{ r.analysis_result.profile_summary.signature_description }}</div>
+                <div class="text-xs text-phosphor-dim leading-relaxed">{{ claimText(r.analysis_result.profile_summary.signature_description) }}</div>
                 <div v-if="r.analysis_result.profile_summary.learning_style" class="mt-2">
                   <dl class="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-xs">
                     <dt class="text-phosphor-faint">PREFERENCE</dt>
@@ -526,29 +527,16 @@ const columns = [
           </div>
         </div>
 
-        <!-- SECTION: STRENGTHS & WEAKNESSES -->
+        <!-- SECTION: STRENGTHS -->
         <div class="border-2 border-crt-border p-4 mb-4">
-          <div class="text-[11px] text-phosphor-dim mb-4 uppercase">[ STRENGTHS & WEAKNESSES ]</div>
+          <div class="text-[11px] text-phosphor-dim mb-4 uppercase">[ STRENGTHS ]</div>
           <div class="mb-4">
             <div class="text-[11px] text-phosphor-faint mb-2 uppercase">STRENGTHS</div>
             <div class="grid gap-3" :class="compareGridClass">
               <div v-for="(r, i) in results" :key="i">
                 <template v-if="r?.analysis_result?.detailed_analysis?.strengths">
                   <ul class="text-xs text-phosphor space-y-0.5">
-                    <li v-for="(s, j) in r.analysis_result.detailed_analysis.strengths" :key="j">/// {{ s }}</li>
-                  </ul>
-                </template>
-                <div v-else class="text-xs text-phosphor-faint">/// NO DATA</div>
-              </div>
-            </div>
-          </div>
-          <div>
-            <div class="text-[11px] text-phosphor-faint mb-2 uppercase">WEAKNESSES</div>
-            <div class="grid gap-3" :class="compareGridClass">
-              <div v-for="(r, i) in results" :key="i">
-                <template v-if="r?.analysis_result?.detailed_analysis?.weaknesses">
-                  <ul class="text-xs text-phosphor space-y-0.5">
-                    <li v-for="(w, j) in r.analysis_result.detailed_analysis.weaknesses" :key="j">/// {{ w }}</li>
+                    <li v-for="(s, j) in r.analysis_result.detailed_analysis.strengths" :key="j">/// {{ claimText(s) }}</li>
                   </ul>
                 </template>
                 <div v-else class="text-xs text-phosphor-faint">/// NO DATA</div>
@@ -593,7 +581,7 @@ const columns = [
                   <div class="space-y-2">
                     <div v-for="(role, j) in r.analysis_result.career_pathing.role_prospects" :key="j" class="border border-crt-border p-2">
                       <div class="text-xs text-phosphor font-bold">{{ role.role_title }}</div>
-                      <div class="text-[11px] text-phosphor-faint mt-0.5">{{ role.match_reason }}</div>
+                      <div class="text-[11px] text-phosphor-faint mt-0.5">{{ claimText(role.match_reason) }}</div>
                     </div>
                   </div>
                 </template>

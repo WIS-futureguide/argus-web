@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import { careerEstimateText } from '@/lib/career-estimate'
+import { claimText } from '@/lib/claim'
 import { useRoute, useRouter } from 'vue-router'
 import { useQuery } from '@tanstack/vue-query'
 import { assessmentsApi, type ScoreItem } from '@/lib/api-assessments'
@@ -267,7 +268,7 @@ function goToChat() {
       <div class="mb-4">
         <div class="text-[11px] text-phosphor-faint mb-1 uppercase">PROFILE SUMMARY</div>
         <div class="text-sm text-phosphor font-bold">{{ analysisResult.profile_summary.signature_title }}</div>
-        <div class="text-xs text-phosphor-dim mt-1">{{ analysisResult.profile_summary.signature_description }}</div>
+        <div class="text-xs text-phosphor-dim mt-1">{{ claimText(analysisResult.profile_summary.signature_description) }}</div>
         <div v-if="analysisResult.profile_summary.learning_style" class="mt-2">
           <dl class="grid grid-cols-[auto_1fr] gap-x-4 gap-y-1 text-xs">
             <dt class="text-phosphor-faint">LEARNING PREFERENCE</dt>
@@ -283,13 +284,7 @@ function goToChat() {
         <div>
           <div class="text-[11px] text-phosphor-faint mb-1 uppercase">STRENGTHS</div>
           <ul class="text-xs text-phosphor space-y-0.5">
-            <li v-for="(s, i) in analysisResult.detailed_analysis.strengths" :key="i">/// {{ s }}</li>
-          </ul>
-        </div>
-        <div>
-          <div class="text-[11px] text-phosphor-faint mb-1 uppercase">WEAKNESSES</div>
-          <ul class="text-xs text-phosphor space-y-0.5">
-            <li v-for="(w, i) in analysisResult.detailed_analysis.weaknesses" :key="i">/// {{ w }}</li>
+            <li v-for="(s, i) in analysisResult.detailed_analysis.strengths" :key="i">/// {{ claimText(s) }}</li>
           </ul>
         </div>
       </div>
@@ -338,7 +333,7 @@ function goToChat() {
               <div class="text-xs text-phosphor font-bold mb-1">{{ role.role_title }}</div>
               <dl class="grid grid-cols-[auto_1fr] gap-x-4 gap-y-1 text-xs">
                 <dt class="text-phosphor-faint">MATCH REASON</dt>
-                <dd>{{ role.match_reason }}</dd>
+                <dd>{{ claimText(role.match_reason) }}</dd>
                 <dt class="text-phosphor-faint">MARKET OUTLOOK</dt>
                 <dd>{{ careerEstimateText(role.market_outlook) }}</dd>
                 <dt class="text-phosphor-faint">AUTOMATION RISK</dt>

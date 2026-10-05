@@ -319,7 +319,12 @@ Full assessment detail for QA review. Returns everything except chat messages.
   "analysis_result": {
     "profile_summary": {
       "signature_title": "The Analytical Creator",
-      "signature_description": "A research-driven personality combining high intellectual curiosity with genuine care for others, excelling in environments that reward both depth of analysis and creative problem-solving.",
+      "signature_description": {
+        "text": "A research-driven personality combining high intellectual curiosity with genuine care for others, excelling in environments that reward both depth of analysis and creative problem-solving.",
+        "reference_ids": [
+          "00000000-0000-4000-8000-000000000001"
+        ]
+      },
       "learning_style": {
         "preference": "Self-directed exploration with structured milestones",
         "environment": "Quiet, resource-rich spaces with periodic collaborative sessions"
@@ -327,13 +332,24 @@ Full assessment detail for QA review. Returns everything except chat messages.
     },
     "detailed_analysis": {
       "strengths": [
-        "Exceptional ability to synthesize creative ideas with systematic execution",
-        "Strong interpersonal awareness that enhances team collaboration",
-        "Natural curiosity driving continuous learning and skill acquisition"
-      ],
-      "weaknesses": [
-        "Tendency to over-analyze before acting",
-        "May struggle with routine tasks that lack intellectual stimulation"
+        {
+          "text": "Exceptional ability to synthesize creative ideas with systematic execution",
+          "reference_ids": [
+            "00000000-0000-4000-8000-000000000001"
+          ]
+        },
+        {
+          "text": "Strong interpersonal awareness that enhances team collaboration",
+          "reference_ids": [
+            "00000000-0000-4000-8000-000000000001"
+          ]
+        },
+        {
+          "text": "Natural curiosity driving continuous learning and skill acquisition",
+          "reference_ids": [
+            "00000000-0000-4000-8000-000000000001"
+          ]
+        }
       ],
       "team_dynamics": {
         "natural_role": "Strategic advisor who provides depth and rigor to team decisions",
@@ -351,30 +367,36 @@ Full assessment detail for QA review. Returns everything except chat messages.
       "role_prospects": [
         {
           "role_title": "UX Researcher",
-          "match_reason": "High Investigative + Artistic + Openness creates natural fit for user-centered research",
-          "market_outlook": "13% projected growth (BLS 2024-2034)",
-          "automation_risk": "Low — requires empathy and qualitative judgment",
-          "wage_structure": {
-            "currency": "IDR",
-            "entry_level": "8000000",
-            "junior": "12000000",
-            "senior": "20000000",
-            "max_potential": "30000000",
-            "average": "15000000"
+          "match_reason": {
+            "text": "High Investigative + Artistic + Openness creates natural fit for user-centered research",
+            "reference_ids": [
+              "00000000-0000-4000-8000-000000000001"
+            ]
+          },
+          "market_outlook": {
+            "label": "stable",
+            "sentence": "Peluang umum dapat bertahan."
+          },
+          "automation_risk": {
+            "label": "medium",
+            "sentence": "Sebagian tugas dapat diotomasi."
           }
         },
         {
           "role_title": "Data Analyst",
-          "match_reason": "High Conscientiousness + Investigative supports structured data interpretation",
-          "market_outlook": "25% projected growth (BLS 2024-2034)",
-          "automation_risk": "Medium — routine reporting automatable, insight generation is not",
-          "wage_structure": {
-            "currency": "IDR",
-            "entry_level": "7000000",
-            "junior": "10000000",
-            "senior": "18000000",
-            "max_potential": "25000000",
-            "average": "13000000"
+          "match_reason": {
+            "text": "High Conscientiousness + Investigative supports structured data interpretation",
+            "reference_ids": [
+              "00000000-0000-4000-8000-000000000001"
+            ]
+          },
+          "market_outlook": {
+            "label": "stable",
+            "sentence": "Peluang umum dapat bertahan."
+          },
+          "automation_risk": {
+            "label": "medium",
+            "sentence": "Sebagian tugas dapat diotomasi."
           }
         }
       ]
@@ -434,6 +456,16 @@ Full assessment detail for QA review. Returns everything except chat messages.
   }
 }
 ```
+
+**Narrative claims:** `signature_description`, each `strengths[]` item and
+`match_reason` carry `{text, reference_ids}`. References are resolved document
+UUIDs (the UUID in this example is synthetic); render `text`, not the entire
+object. The web reader also accepts historical strings. Atlas `v0.23.0` source
+omits `weaknesses` and `wage_structure` even for stored historical results;
+the web suppresses those fields from older deployed responses as well.
+Career estimates accept `{label,sentence}` or historical strings and display
+“Perkiraan umum, bukan data pasar.”. Template and worker rollout follows
+separately; this example describes the current source contract.
 
 **Nullable fields:** `assessment.completed_at`, `user.school_name`, `user.grade`, `user.major`, `model_info` (entire object — null if not yet analyzed), `analysis_result` (entire object — null if not completed), `chat_summary` (entire object — null if no chat), `chat_summary.last_message_at`. See [Nullable & Omitted Fields](#nullable--omitted-fields) for omit vs null behavior.
 

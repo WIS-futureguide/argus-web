@@ -4,6 +4,7 @@ import { createTestingPinia } from '@pinia/testing'
 import { createRouter, createMemoryHistory } from 'vue-router'
 import { VueQueryPlugin, QueryClient } from '@tanstack/vue-query'
 import AssessmentComparePage from '@/pages/AssessmentComparePage.vue'
+import { claimDetail } from './fixtures/assessment-detail'
 
 const { mockDetail } = vi.hoisted(() => ({ mockDetail: vi.fn() }))
 vi.mock('@/lib/api-assessments', () => ({
@@ -25,7 +26,7 @@ function legacyDetail(id: string, kind: string) {
     model_info: null,
     analysis_result: {
       profile_summary: { signature_title: 'The Sage', signature_description: 'Profil lama' },
-      detailed_analysis: { strengths: [], weaknesses: [], team_dynamics: {} },
+      detailed_analysis: { strengths: [], weaknesses: ['Impatience'], team_dynamics: {} },
       career_pathing: {
         top_industries: ['Penelitian'], ideal_work_environment: 'Ruang diskusi',
         role_prospects: [{ role_title: 'Peneliti', match_reason: 'Minat investigatif',
@@ -65,7 +66,40 @@ describe('AssessmentComparePage legacy career results', () => {
     for (const retained of ['The Sage', 'Peneliti', 'Minat investigatif', 'Ruang diskusi', 'Perkiraan umum, bukan data pasar.']) {
       expect(wrapper.text()).toContain(retained)
     }
-    for (const forbidden of ['WAGE', 'IDR', '8900001', '8900002', '8900003', '8900004', '8900005']) {
+    for (const forbidden of ['WAGE', 'IDR', '8900001', '8900002', '8900003', '8900004', '8900005', 'WEAKNESSES', 'Impatience']) {
+      expect(wrapper.text()).not.toContain(forbidden)
+    }
+    wrapper.unmount()
+  })
+
+  it.each(['object', 'string', 'mixed'] as const)('compares %s claims across object and string estimates without JSON metadata', async (claimKind) => {
+    mockDetail.mockImplementation((id: string) => Promise.resolve(claimDetail(id, claimKind, id === 'a1' ? 'object' : 'string')))
+    const router = createRouter({
+      history: createMemoryHistory(),
+      routes: [{ path: '/compare', component: { template: '<div />' } }],
+    })
+    await router.push('/compare?ids=a1,a2')
+    await router.isReady()
+    const wrapper = mount(AssessmentComparePage, {
+      global: { plugins: [
+        createTestingPinia({ createSpy: vi.fn }), router,
+        [VueQueryPlugin, { queryClient: new QueryClient({ defaultOptions: { queries: { retry: false } } }) }],
+      ] },
+    })
+    await flushPromises()
+    const compare = wrapper.findAll('button').find(button => button.text().includes('COMPARE 2 ASSESSMENTS'))!
+    await compare.trigger('click')
+    await flushPromises()
+    expect(wrapper.text()).toContain('COMPARING 2 ASSESSMENTS')
+    for (const retained of ['Profil penuh rasa ingin tahu', 'Menimbang sudut pandang',
+      'Mencari pola gagasan', 'Minat investigatif', 'Latihan mengambil keputusan',
+      'Coba pilihan kecil setiap hari.']) {
+      // Both comparison columns must keep each narrative, for either estimate shape.
+      expect(wrapper.text().split(retained)).toHaveLength(3)
+    }
+    expect(wrapper.text()).toContain('Perkiraan umum, bukan data pasar.')
+    for (const forbidden of ['reference_ids', '"text"', '{"text"', '[object Object]',
+      '00000000-0000-4000-8000-000000000001', 'WEAKNESSES', 'WAGE']) {
       expect(wrapper.text()).not.toContain(forbidden)
     }
     wrapper.unmount()
