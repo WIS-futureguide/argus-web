@@ -1,5 +1,12 @@
 # Argus Web
 
+D43 rollout acceptance completed on the development laptop (2026-10-05).
+The manually refreshed admin image includes PS3 Potensi and the existing
+object/string estimate and Claim readers. Build/typecheck and all 317 tests
+passed, including detail/compare compatibility regressions; the Docker gate
+repeated the same build/tests before deployment. No UI/source or API contract
+change was needed. Production-host timer activation remains P25b.
+
 Public Vue 3 admin dashboard for FutureGuide. This repository is `WIS-futureguide/argus-web` and uses the `master` branch. It provides user, assessment, monitoring, prompt, Potensi catalog, ledger, and admin-management screens aligned with the current Argus API. Admin and authentication requests share `https://api.futureguide.id`. Set the public build-time `VITE_API_BASE_URL` to override this origin; an empty value uses the default. The dashboard production target is `https://admin.futureguide.id` behind Cloudflare Access.
 
 Run `npm ci` to install dependencies, `npm run build` to build the app, and `npm run test:run` to run its tests.

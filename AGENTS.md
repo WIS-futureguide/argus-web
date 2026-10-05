@@ -1,5 +1,12 @@
 # AGENTS.md — argus-web
 
+D43 rollout acceptance completed on the development laptop (2026-10-05).
+The manually refreshed admin image includes PS3 Potensi and the existing
+object/string estimate and Claim readers. Build/typecheck and all 317 tests
+passed, including detail/compare compatibility regressions; the Docker gate
+repeated the same build/tests before deployment. No UI/source or API contract
+change was needed. Production-host timer activation remains P25b.
+
 > Workspace rules: `../AGENTS.md`. Structure map: `CODEMAP.md`.
 > Domain vocabulary: `CONTEXT.md` (in this repo). API contract:
 > `docs/api-admin.md` and `../docs/api-admin.md`.
