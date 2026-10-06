@@ -66,6 +66,32 @@ describe('PotensiDetailPage', () => {
     expect(potensiApi.audit).toHaveBeenCalledTimes(2)
     expect(wrapper.find('form').exists()).toBe(false)
   })
+  it('shows deduplicated warnings across fields and still allows saving editorial copy', async () => {
+    await setup()
+    await wrapper.find('[aria-label="Edit R-O-Wisdom"]').trigger('click')
+    expect(wrapper.find('[role="alert"]').exists()).toBe(false)
+    await wrapper.find('input').setValue('TALENTA talenta')
+    const textareas = wrapper.findAll('textarea')
+    await textareas[0]!.setValue('Keterampilan TALENTA')
+    await textareas[1]!.setValue('keterampilan')
+    await textareas[2]!.setValue('Talenta')
+    expect(wrapper.find('[role="alert"]').text()).toContain('Peringatan copy: talenta, keterampilan.')
+    expect(button('Simpan entri').attributes('disabled')).toBeUndefined()
+    await wrapper.find('form').trigger('submit')
+    await flushPromises()
+    expect(potensiApi.updateEntry).toHaveBeenCalledWith('v1', { ...entries[0],
+      name: 'TALENTA talenta', description: 'Keterampilan TALENTA',
+      example_activities: 'keterampilan', example_majors: 'Talenta',
+    })
+  })
+  it('clears the warning when all fields return to normal copy', async () => {
+    await setup()
+    await wrapper.find('[aria-label="Edit R-O-Wisdom"]').trigger('click')
+    await wrapper.findAll('textarea')[2]!.setValue('TALENTA')
+    expect(wrapper.find('[role="alert"]').text()).toContain('talenta')
+    await wrapper.findAll('textarea')[2]!.setValue('Sastra')
+    expect(wrapper.find('[role="alert"]').exists()).toBe(false)
+  })
   it('requires explicit confirmation before publishing, then becomes read-only', async () => {
     await setup()
     await button('Publikasikan versi').trigger('click')

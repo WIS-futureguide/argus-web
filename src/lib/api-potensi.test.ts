@@ -21,8 +21,28 @@ describe('Potensi API contract', () => {
     potensiApi.publish('v1')
     expect(api.post).toHaveBeenLastCalledWith('/admin/potensi/versions/v1/publish')
   })
-  it('warns for forbidden copy in all fields, case insensitive, without false clean results', () => {
-    expect(potensiCopyWarnings({ cell_id: '', name: 'SKILL', description: 'kelemahan', example_activities: 'diagnosis', example_majors: 'skill' })).toEqual(['skill', 'kelemahan', 'diagnos'])
-    expect(potensiCopyWarnings({ cell_id: '', name: 'Tenang', description: 'Kecenderungan', example_activities: 'Latihan', example_majors: 'Sastra' })).toEqual([])
+})
+
+describe('Potensi editorial copy warnings', () => {
+  const normal = { cell_id: 'R-O-Wisdom', name: 'Tenang', description: 'Kecenderungan untuk berlatih', example_activities: 'Membaca', example_majors: 'Sastra' }
+  const fields = ['name', 'description', 'example_activities', 'example_majors'] as const
+  const terms = ['skill', 'keterampilan', 'talenta', 'kelemahan', 'diagnos']
+
+  it.each(fields)('warns for every D42 term in %s, regardless of case', field => {
+    for (const term of terms) {
+      for (const text of [term, term.toUpperCase(), term[0]!.toUpperCase() + term.slice(1)]) {
+        expect(potensiCopyWarnings({ ...normal, [field]: `Contoh ${text}` })).toEqual([term])
+      }
+    }
+  })
+  it('deduplicates repeated terms within and across editorial fields', () => {
+    expect(potensiCopyWarnings({ ...normal,
+      name: 'Talenta TALENTA talenta', description: 'KETERAMPILAN talenta',
+      example_activities: 'keterampilan Skill SKILL', example_majors: 'diagnosis DIAGNOSTIK kelemahan KELEMAHAN',
+    })).toEqual(['talenta', 'keterampilan', 'skill', 'diagnos', 'kelemahan'])
+  })
+  it('keeps normal copy and non-editorial cell IDs warning-free', () => {
+    expect(potensiCopyWarnings(normal)).toEqual([])
+    expect(potensiCopyWarnings({ ...normal, cell_id: 'skill-keterampilan-talenta' })).toEqual([])
   })
 })

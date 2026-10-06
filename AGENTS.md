@@ -142,3 +142,13 @@ Object/string estimate readers and the estimate qualifier are preserved.
 Synthetic typed fixtures follow Argus's direct Atlas-model JSONB scan; detail
 and compare regressions cover object, string and mixed claims, plus both
 estimate shapes. Template/Potensi/worker rollout remains a separate backend unit.
+
+Dev #109 local debt: D42 warnings match
+`skill|keterampilan|talenta|kelemahan|diagnos` case-insensitively in all four
+editorial fields, deduplicated; warnings do not block save/publish. Preserve the
+approved catalog and API rules. README's dependency verification gate requires
+separate official-registry/TLS production and full audits plus focused tests,
+build, full tests and Docker gate. Vue/server-renderer 3.5.42, Vite 6.4.4 and
+Vitest 4.1.11 pass 324 tests; both audits report zero (2026-10-06).
+Keep the explicit server-renderer test dependency: Vue Test Utils loads it even
+though its peer is optional. This local patch does not deploy or close PW7.

@@ -43,8 +43,11 @@ shows the 180 catalog entries, RIASEC/OCEAN/virtue filters and paginated audit
 history. OCEAN's fifth catalog dimension is ES (emotional stability).
 Admins read; superadmins clone the active version, edit draft entries, and
 publish after explicit confirmation. Active and retired versions are immutable.
-The editor warns for `skill`, `kelemahan`, and `diagnos` in all four text fields;
-these are editorial warnings, while Argus validates and audits each mutation.
+The editor warns for `skill|keterampilan|talenta|kelemahan|diagnos` in name,
+description, example activities and example majors. Matching is case-insensitive
+and deduplicated across fields (including the `diagnos` stem). Warnings remain
+editorial: saving is allowed; no new API/publication restriction or approved
+catalog change is introduced. Argus validates and audits each mutation.
 Publication changes historical results, share links and future PDF reads.
 Errors preserve unsaved form text; successful writes refetch detail and audit.
 
@@ -72,3 +75,64 @@ Object/string estimate readers and the estimate qualifier are preserved.
 Synthetic typed fixtures follow Argus's direct Atlas-model JSONB scan; detail
 and compare regressions cover object, string and mixed claims, plus both
 estimate shapes. Template/Potensi/worker rollout remains a separate backend unit.
+
+## Dependency verification gate (dev #109, 2026-10-06)
+
+Before accepting a dependency patch, read `npm ls --all` and both audit reports.
+Use the official registry with TLS verification explicitly enabled; keep device
+npm configuration unchanged. Apply compatible fixes through npm, review the
+manifest/lockfile diff, then require these checks from the repository root:
+
+```bash
+npm ci --registry=https://registry.npmjs.org --strict-ssl=true
+npm run test:run -- src/lib/api-potensi.test.ts src/pages/PotensiDetailPage.test.ts
+npm run build
+npm run test:run
+docker build --target gate .
+npm audit --omit=dev --registry=https://registry.npmjs.org --strict-ssl=true --audit-level=high
+npm audit --registry=https://registry.npmjs.org --strict-ssl=true --audit-level=high
+```
+
+The two audit checks are a separate acceptance gate; the Docker `gate` stage
+runs build/tests, not an explicit blocking audit. Record every residual advisory
+and its reachable path even below High. Audit failure, registry failure or TLS
+failure must not count as clean. Do not use `--force`, disable TLS or remove
+features to silence an advisory. Review public-repo changes for secrets and
+internal hostnames before any separately authorized publish.
+
+Dev #109 baseline: production graph **5 High**; full graph **8 High + 2 Moderate**.
+`npm audit fix` resolved compatible transitive/tooling updates but left Vue and
+its server renderer (2 High). Explicit Vue `3.5.34 → 3.5.42` resolved those.
+Vue Test Utils requires `@vue/server-renderer` at module load despite its optional
+peer declaration; a fresh install exposed its missing root module. Declare
+`@vue/server-renderer ^3.5.42` in devDependencies to retain component testing.
+It is also reached from Vue in the npm production graph; this does not add SSR
+to the app. Final `npm ci`, typecheck/build, **19 focused / 324 total tests in
+35 files**, and Docker gate pass. Final production and full audits each report
+**0 vulnerabilities**, with no peer errors in `npm ls --all`.
+
+Reachability of the original findings:
+
+- Production dependency graph: Vue/server-renderer had an SSR attribute XSS
+  advisory; this SPA uses `createApp`, not server rendering. Vue's compiler-SFC
+  pulls PostCSS/source-map-js into that graph, but their source-map parsing is
+  build tooling here. Registry production classification is not image runtime
+  reachability: the nginx runtime copies only static `dist` assets.
+- `radix-vue → nanoid` and `PostCSS → nanoid`: unsafe generator size paths were
+  reported. No app import/call to `nanoid`, `customAlphabet` or `customRandom`
+  was found in `src`; no attacker-controlled generator size path was found in
+  the inspected app. This is a source review, not proof about every possible
+  upstream consumer.
+- Build/test tooling: Vite dev-server Windows path handling; Vitest/mocker
+  redirect mocks; happy-dom's `ws`; vue-tsc's minimatch/brace-expansion. These
+  tools do not run in the static nginx image. Development/build inputs and
+  exposed tooling still matter, so all were patched rather than waived.
+
+Relevant final lockfile versions: Vite **6.4.4**, Vitest/mocker **4.1.11**,
+PostCSS **8.5.29**, nanoid **5.1.16 / 3.3.20**, source-map-js **1.2.2**,
+brace-expansion **2.1.7**, ws **8.22.0**, Vue/server-renderer **3.5.42**.
+All updates stay within existing major lines; npm also updated compatible Vue
+compiler/shared and Babel/Vitest helper dependencies. No override or package
+removal workaround is used. Audit results are a dated registry snapshot, not
+future assurance. No deployment, container recreation, timer activation or
+Git write was performed; deployment/PW7 acceptance remains separate.

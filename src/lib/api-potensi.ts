@@ -61,5 +61,5 @@ export const virtueOptions = ['Wisdom', 'Courage', 'Humanity', 'Justice', 'Tempe
 // Editorial warning only. The server still validates text and publication.
 export function potensiCopyWarnings(entry: PotensiEntry): string[] {
   return [...new Set([entry.name, entry.description, entry.example_activities, entry.example_majors]
-    .flatMap(text => text.match(/skill|kelemahan|diagnos/gi) ?? []).map(term => term.toLowerCase()))]
+    .flatMap(text => text.match(/skill|keterampilan|talenta|kelemahan|diagnos/gi) ?? []).map(term => term.toLowerCase()))]
 }
