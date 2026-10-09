@@ -3,8 +3,7 @@
 Base URL (tunnel): `https://api.futureguide.id`
 Base URL (local): `http://localhost:8085`
 
-The current Argus API has 51 administrative routes. Potensi catalog routes
-are documented below (PS3); the backend owns the full canonical reference.
+This reference covers 51 administrative routes.
 
 All `/admin/*` endpoints require a valid JWT issued by `POST /auth/admin/login` at `https://api.futureguide.id/auth/admin/login`. Include it as a Bearer token:
 
@@ -20,7 +19,7 @@ Content-Type: application/json
 | Role | Access |
 |------|--------|
 | `admin` | All read endpoints + `PUT /admin/users/{id}`, `POST /admin/users/{id}/verify-email`, `PUT /admin/admins/me` |
-| `superadmin` | Everything. Routes guarded by `SuperAdminOnly` middleware in `internal/admin/module.go`: user suspend/unsuspend/revoke-sessions/reset-password/grant-tokens/deduct-tokens; `PUT /config/{key}`, `POST /config/reload`; prompt update/revert/toggle; ledger infra-costs PUT/DELETE and exchange-rate PUT/refresh; admin create/update/delete/reset-password. |
+| `superadmin` | Everything. Routes guarded by `SuperAdminOnly` middleware in `internal/admin/module.go`: user suspend/unsuspend/revoke-sessions/reset-password/grant-tokens/deduct-tokens; `PUT /config/{key}`, `POST /config/reload`; prompt update/revert/toggle; Potensi draft/edit/publish; ledger infra-costs PUT/DELETE and exchange-rate PUT/refresh; admin create/update/delete/reset-password. |
 
 **Stale token rejection:** If an admin is demoted (e.g. superadmin to admin), existing JWTs with the old role are rejected with 403 until a new token is issued.
 
@@ -235,7 +234,7 @@ Paginated assessment list for QA navigation.
 | `date_to` | datetime | Assessments created before |
 | `user_name` | string | ILIKE search on `users.full_name` |
 | `user_email` | string | ILIKE search on `users.email` |
-| `model` | string | Filter by analysis model used |
+| `model` | string | Filter by the latest analysis run model (`created_at DESC, id DESC`) |
 
 **Response 200:**
 ```json
@@ -319,12 +318,7 @@ Full assessment detail for QA review. Returns everything except chat messages.
   "analysis_result": {
     "profile_summary": {
       "signature_title": "The Analytical Creator",
-      "signature_description": {
-        "text": "A research-driven personality combining high intellectual curiosity with genuine care for others, excelling in environments that reward both depth of analysis and creative problem-solving.",
-        "reference_ids": [
-          "00000000-0000-4000-8000-000000000001"
-        ]
-      },
+      "signature_description": "A research-driven personality combining high intellectual curiosity with genuine care for others, excelling in environments that reward both depth of analysis and creative problem-solving.",
       "learning_style": {
         "preference": "Self-directed exploration with structured milestones",
         "environment": "Quiet, resource-rich spaces with periodic collaborative sessions"
@@ -332,24 +326,13 @@ Full assessment detail for QA review. Returns everything except chat messages.
     },
     "detailed_analysis": {
       "strengths": [
-        {
-          "text": "Exceptional ability to synthesize creative ideas with systematic execution",
-          "reference_ids": [
-            "00000000-0000-4000-8000-000000000001"
-          ]
-        },
-        {
-          "text": "Strong interpersonal awareness that enhances team collaboration",
-          "reference_ids": [
-            "00000000-0000-4000-8000-000000000001"
-          ]
-        },
-        {
-          "text": "Natural curiosity driving continuous learning and skill acquisition",
-          "reference_ids": [
-            "00000000-0000-4000-8000-000000000001"
-          ]
-        }
+        "Exceptional ability to synthesize creative ideas with systematic execution",
+        "Strong interpersonal awareness that enhances team collaboration",
+        "Natural curiosity driving continuous learning and skill acquisition"
+      ],
+      "weaknesses": [
+        "Tendency to over-analyze before acting",
+        "May struggle with routine tasks that lack intellectual stimulation"
       ],
       "team_dynamics": {
         "natural_role": "Strategic advisor who provides depth and rigor to team decisions",
@@ -367,36 +350,30 @@ Full assessment detail for QA review. Returns everything except chat messages.
       "role_prospects": [
         {
           "role_title": "UX Researcher",
-          "match_reason": {
-            "text": "High Investigative + Artistic + Openness creates natural fit for user-centered research",
-            "reference_ids": [
-              "00000000-0000-4000-8000-000000000001"
-            ]
-          },
-          "market_outlook": {
-            "label": "stable",
-            "sentence": "Peluang umum dapat bertahan."
-          },
-          "automation_risk": {
-            "label": "medium",
-            "sentence": "Sebagian tugas dapat diotomasi."
+          "match_reason": "High Investigative + Artistic + Openness creates natural fit for user-centered research",
+          "market_outlook": "13% projected growth (BLS 2024-2034)",
+          "automation_risk": "Low — requires empathy and qualitative judgment",
+          "wage_structure": {
+            "currency": "IDR",
+            "entry_level": "8000000",
+            "junior": "12000000",
+            "senior": "20000000",
+            "max_potential": "30000000",
+            "average": "15000000"
           }
         },
         {
           "role_title": "Data Analyst",
-          "match_reason": {
-            "text": "High Conscientiousness + Investigative supports structured data interpretation",
-            "reference_ids": [
-              "00000000-0000-4000-8000-000000000001"
-            ]
-          },
-          "market_outlook": {
-            "label": "stable",
-            "sentence": "Peluang umum dapat bertahan."
-          },
-          "automation_risk": {
-            "label": "medium",
-            "sentence": "Sebagian tugas dapat diotomasi."
+          "match_reason": "High Conscientiousness + Investigative supports structured data interpretation",
+          "market_outlook": "25% projected growth (BLS 2024-2034)",
+          "automation_risk": "Medium — routine reporting automatable, insight generation is not",
+          "wage_structure": {
+            "currency": "IDR",
+            "entry_level": "7000000",
+            "junior": "10000000",
+            "senior": "18000000",
+            "max_potential": "25000000",
+            "average": "13000000"
           }
         }
       ]
@@ -456,16 +433,6 @@ Full assessment detail for QA review. Returns everything except chat messages.
   }
 }
 ```
-
-**Narrative claims:** `signature_description`, each `strengths[]` item and
-`match_reason` carry `{text, reference_ids}`. References are resolved document
-UUIDs (the UUID in this example is synthetic); render `text`, not the entire
-object. The web reader also accepts historical strings. Atlas `v0.23.0` source
-omits `weaknesses` and `wage_structure` even for stored historical results;
-the web suppresses those fields from older deployed responses as well.
-Career estimates accept `{label,sentence}` or historical strings and display
-“Perkiraan umum, bukan data pasar.”. Template and worker rollout follows
-separately; this example describes the current source contract.
 
 **Nullable fields:** `assessment.completed_at`, `user.school_name`, `user.grade`, `user.major`, `model_info` (entire object — null if not yet analyzed), `analysis_result` (entire object — null if not completed), `chat_summary` (entire object — null if no chat), `chat_summary.last_message_at`. See [Nullable & Omitted Fields](#nullable--omitted-fields) for omit vs null behavior.
 
@@ -978,23 +945,23 @@ Update a config value.
 **Request body:**
 ```json
 {
-  "value": "gemini-2.5-pro",
-  "reason": "Testing whether the pro model improves claim support and structure compliance"
+  "value": "gemini-3.5-flash-lite",
+  "reason": "Testing whether the lite model keeps claim support and structure compliance"
 }
 ```
 
-**Rules:** `value` required (non-empty string). Value validated against the key's declared `value_type` (string, int, float, bool, duration). Publishes Redis invalidation after update.
+**Rules:** `value` required (non-empty string). Value validated against the key's declared `value_type` (string, int, float, bool, duration). For `analysis.gemini_model`, `analysis.gemini_fallback_model` and `analysis.embedding_model` the value must also be in a static allow-list (see `atlas/docs/rag-and-config.md`); unknown model names return 400. `analysis.max_retries` must be an integer 1–3 and `analysis.rag_top_k` 1–20 (Athena's own bounds); other values return 400. Publishes Redis invalidation after update.
 
 **Response 200:**
 ```json
 {
   "key": "analysis.gemini_model",
-  "value": "gemini-2.5-pro",
+  "value": "gemini-3.5-flash-lite",
   "restart_warning": "this change requires an analysis-worker restart to take effect"
 }
 ```
 
-**`restart_warning`:** only present (omitempty) for key `analysis.worker_count`.
+**`restart_warning`:** only present (omitempty) for the startup-only keys `analysis.worker_count`, `analysis.max_retries`, `analysis.rag_top_k` and the three Gemini model keys (read once at Athena startup).
 
 **Errors:**
 
@@ -1078,7 +1045,7 @@ Full infrastructure status. All checks run in parallel with 3s per-check timeout
 }
 ```
 
-Service checks default to the two internal APIs, keyed by `apollo` and `argus`. The public tunnel check defaults to `api=https://api.futureguide.id/health` and reaches Apollo only; Argus is checked internally. Override via `ADMIN_SERVICE_HEALTH_URLS` / `ADMIN_SERVICE_TUNNEL_URLS` (`name=url` pairs).
+Service checks default to `apollo=http://apollo:8080/health,argus=http://argus:8085/health` on the Docker network. The public tunnel check defaults to `api=https://api.futureguide.id/health` and reaches Apollo only; Argus is checked internally. Override via `ADMIN_SERVICE_HEALTH_URLS` / `ADMIN_SERVICE_TUNNEL_URLS` (`name=url` pairs).
 
 **`services` and `tunnel`:** maps keyed by service name (not arrays). Each value is a `ServiceCheck`:
 - `status`: `"healthy"`, `"unhealthy"`, or `"timeout"`
@@ -1431,7 +1398,7 @@ Profit & loss summary.
 
 ### `GET /admin/ledger/months`
 
-List available months with data.
+List months with completed payment revenue or successful AI usage, newest first. Empty gaps are omitted; month boundaries use the database session timezone.
 
 **Access:** Any admin
 
@@ -2039,6 +2006,7 @@ All errors follow the canonical format from `shared/pkg/httputil`:
 - `must_change_password` is enforced by Argus. While true, only `PUT /admin/admins/me` with a new password is allowed.
 - Password reset/change and role changes invalidate previously issued admin JWTs. Admins log in again after changing their password.
 - Admin activity records include the actor email and resolved client IP.
+
 
 ## Potensi catalog (D42 / PS2-b-a)
 
