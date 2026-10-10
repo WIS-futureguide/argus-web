@@ -316,115 +316,125 @@ Full assessment detail for QA review. Returns everything except chat messages.
     }
   },
   "analysis_result": {
-    "profile_summary": {
-      "signature_title": "The Analytical Creator",
-      "signature_description": "A research-driven personality combining high intellectual curiosity with genuine care for others, excelling in environments that reward both depth of analysis and creative problem-solving.",
-      "learning_style": {
-        "preference": "Self-directed exploration with structured milestones",
-        "environment": "Quiet, resource-rich spaces with periodic collaborative sessions"
+      "profile_summary": {
+        "signature_title": "The Analytical Creator",
+        "signature_description": {
+          "text": "A research-driven personality combining high intellectual curiosity with genuine care for others, excelling in environments that reward both depth of analysis and creative problem-solving.",
+          "reference_ids": []
+        },
+        "learning_style": {
+          "preference": "Self-directed exploration with structured milestones",
+          "environment": "Quiet, resource-rich spaces with periodic collaborative sessions"
+        }
+      },
+      "detailed_analysis": {
+        "strengths": [
+          {
+            "text": "Exceptional ability to synthesize creative ideas with systematic execution",
+            "reference_ids": []
+          },
+          {
+            "text": "Strong interpersonal awareness that enhances team collaboration",
+            "reference_ids": []
+          },
+          {
+            "text": "Natural curiosity driving continuous learning and skill acquisition",
+            "reference_ids": []
+          }
+        ],
+        "team_dynamics": {
+          "natural_role": "Strategic advisor who provides depth and rigor to team decisions",
+          "collaboration_style": "Prefers small-group deep work over large-team coordination",
+          "synergy_needs": "Needs action-oriented teammates who push past analysis paralysis"
+        }
+      },
+      "career_pathing": {
+        "top_industries": [
+          "UX Research in EdTech",
+          "Behavioral Science Consulting",
+          "Clinical Data Analytics"
+        ],
+        "ideal_work_environment": "Autonomous role with clear goals, minimal bureaucracy, and access to mentorship from domain experts.",
+        "role_prospects": [
+          {
+            "role_title": "UX Researcher",
+            "match_reason": {
+              "text": "High Investigative + Artistic + Openness creates natural fit for user-centered research",
+              "reference_ids": []
+            },
+            "market_outlook": {
+              "label": "growing",
+              "sentence": "Research and interpretation may remain useful across industries; this is a general estimate, not market data."
+            },
+            "automation_risk": {
+              "label": "low",
+              "sentence": "Some routine tasks may be automated while interpretation and collaboration remain context-dependent."
+            }
+          },
+          {
+            "role_title": "Data Analyst",
+            "match_reason": {
+              "text": "High Conscientiousness + Investigative supports structured data interpretation",
+              "reference_ids": []
+            },
+            "market_outlook": {
+              "label": "growing",
+              "sentence": "Research and interpretation may remain useful across industries; this is a general estimate, not market data."
+            },
+            "automation_risk": {
+              "label": "medium",
+              "sentence": "Some routine tasks may be automated while interpretation and collaboration remain context-dependent."
+            }
+          }
+        ]
+      },
+      "student_recommendations": {
+        "extracurricular_clubs": [
+          {
+            "club_name": "Design Thinking Lab",
+            "relevance": "Channels Artistic and Investigative traits into structured creative problem-solving"
+          },
+          {
+            "club_name": "Psychology Research Club",
+            "relevance": "Develops research methodology skills aligned with high Openness and Investigative scores"
+          }
+        ],
+        "immediate_actions": [
+          {
+            "action": "Start a research journal",
+            "description": "Document one observation per day about user behavior in apps you use — builds research muscle"
+          },
+          {
+            "action": "Take an online UX fundamentals course",
+            "description": "Platforms like Coursera or Google UX Certificate provide structured entry into the field"
+          }
+        ]
+      },
+      "personal_growth": {
+        "development_areas": [
+          {
+            "area": "Decision speed under ambiguity",
+            "action_plan": "Practice 2-minute decision drills: set a timer and commit to a choice before it rings, starting with low-stakes daily decisions"
+          },
+          {
+            "area": "Public speaking confidence",
+            "action_plan": "Join a debate club or Toastmasters equivalent; present one finding per month to a small group"
+          }
+        ],
+        "book_recommendations": [
+          {
+            "title": "Thinking, Fast and Slow",
+            "author": "Daniel Kahneman",
+            "relevance": "Directly addresses the analytical-intuitive tension visible in high Investigative + moderate Neuroticism"
+          },
+          {
+            "title": "The Design of Everyday Things",
+            "author": "Don Norman",
+            "relevance": "Bridges Artistic creativity with systematic usability thinking — core UX foundation"
+          }
+        ]
       }
     },
-    "detailed_analysis": {
-      "strengths": [
-        "Exceptional ability to synthesize creative ideas with systematic execution",
-        "Strong interpersonal awareness that enhances team collaboration",
-        "Natural curiosity driving continuous learning and skill acquisition"
-      ],
-      "weaknesses": [
-        "Tendency to over-analyze before acting",
-        "May struggle with routine tasks that lack intellectual stimulation"
-      ],
-      "team_dynamics": {
-        "natural_role": "Strategic advisor who provides depth and rigor to team decisions",
-        "collaboration_style": "Prefers small-group deep work over large-team coordination",
-        "synergy_needs": "Needs action-oriented teammates who push past analysis paralysis"
-      }
-    },
-    "career_pathing": {
-      "top_industries": [
-        "UX Research in EdTech",
-        "Behavioral Science Consulting",
-        "Clinical Data Analytics"
-      ],
-      "ideal_work_environment": "Autonomous role with clear goals, minimal bureaucracy, and access to mentorship from domain experts.",
-      "role_prospects": [
-        {
-          "role_title": "UX Researcher",
-          "match_reason": "High Investigative + Artistic + Openness creates natural fit for user-centered research",
-          "market_outlook": "13% projected growth (BLS 2024-2034)",
-          "automation_risk": "Low — requires empathy and qualitative judgment",
-          "wage_structure": {
-            "currency": "IDR",
-            "entry_level": "8000000",
-            "junior": "12000000",
-            "senior": "20000000",
-            "max_potential": "30000000",
-            "average": "15000000"
-          }
-        },
-        {
-          "role_title": "Data Analyst",
-          "match_reason": "High Conscientiousness + Investigative supports structured data interpretation",
-          "market_outlook": "25% projected growth (BLS 2024-2034)",
-          "automation_risk": "Medium — routine reporting automatable, insight generation is not",
-          "wage_structure": {
-            "currency": "IDR",
-            "entry_level": "7000000",
-            "junior": "10000000",
-            "senior": "18000000",
-            "max_potential": "25000000",
-            "average": "13000000"
-          }
-        }
-      ]
-    },
-    "student_recommendations": {
-      "extracurricular_clubs": [
-        {
-          "club_name": "Design Thinking Lab",
-          "relevance": "Channels Artistic and Investigative traits into structured creative problem-solving"
-        },
-        {
-          "club_name": "Psychology Research Club",
-          "relevance": "Develops research methodology skills aligned with high Openness and Investigative scores"
-        }
-      ],
-      "immediate_actions": [
-        {
-          "action": "Start a research journal",
-          "description": "Document one observation per day about user behavior in apps you use — builds research muscle"
-        },
-        {
-          "action": "Take an online UX fundamentals course",
-          "description": "Platforms like Coursera or Google UX Certificate provide structured entry into the field"
-        }
-      ]
-    },
-    "personal_growth": {
-      "development_areas": [
-        {
-          "area": "Decision speed under ambiguity",
-          "action_plan": "Practice 2-minute decision drills: set a timer and commit to a choice before it rings, starting with low-stakes daily decisions"
-        },
-        {
-          "area": "Public speaking confidence",
-          "action_plan": "Join a debate club or Toastmasters equivalent; present one finding per month to a small group"
-        }
-      ],
-      "book_recommendations": [
-        {
-          "title": "Thinking, Fast and Slow",
-          "author": "Daniel Kahneman",
-          "relevance": "Directly addresses the analytical-intuitive tension visible in high Investigative + moderate Neuroticism"
-        },
-        {
-          "title": "The Design of Everyday Things",
-          "author": "Don Norman",
-          "relevance": "Bridges Artistic creativity with systematic usability thinking — core UX foundation"
-        }
-      ]
-    }
-  },
   "chat_summary": {
     "session_id": "uuid",
     "message_count": 12,
@@ -433,6 +443,8 @@ Full assessment detail for QA review. Returns everything except chat messages.
   }
 }
 ```
+
+**Narrative compatibility:** Claims use `{text, reference_ids}`; IDs are resolved reference UUIDs (an empty array means no cited retrieval). New career estimates use qualitative `{label, sentence}` objects, with no salary or measured market statistics. Historical string estimates retain their string JSON shape. The typed result omits retired `weaknesses` and `wage_structure` keys when serializing historical rows; reading never rewrites stored JSON. Keep the general-estimate disclaimer in views.
 
 **Nullable fields:** `assessment.completed_at`, `user.school_name`, `user.grade`, `user.major`, `model_info` (entire object — null if not yet analyzed), `analysis_result` (entire object — null if not completed), `chat_summary` (entire object — null if no chat), `chat_summary.last_message_at`. See [Nullable & Omitted Fields](#nullable--omitted-fields) for omit vs null behavior.
 
